@@ -1,0 +1,2548 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Report xmlns:rd="http://schemas.microsoft.com/SQLServer/reporting/reportdesigner" xmlns:cl="http://schemas.microsoft.com/sqlserver/reporting/2010/01/componentdefinition" xmlns="http://schemas.microsoft.com/sqlserver/reporting/2010/01/reportdefinition">
+  <AutoRefresh>0</AutoRefresh>
+  <DataSources>
+    <DataSource Name="DataSource1">
+      <DataSourceReference>DCMP</DataSourceReference>
+      <rd:SecurityType>DataBase</rd:SecurityType>
+      <rd:DataSourceID>90f5b1c5-9c93-42e5-b298-755d0dfc2fcb</rd:DataSourceID>
+    </DataSource>
+  </DataSources>
+  <DataSets>
+    <DataSet Name="工廠下拉">
+      <Query>
+        <DataSourceName>DataSource1</DataSourceName>
+        <CommandText>select distinct Plant from PlantInfo</CommandText>
+      </Query>
+      <Fields>
+        <Field Name="Plant">
+          <DataField>Plant</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+      </Fields>
+    </DataSet>
+    <DataSet Name="樓棟">
+      <Query>
+        <DataSourceName>DataSource1</DataSourceName>
+        <QueryParameters>
+          <QueryParameter Name="@廠區">
+            <Value>=Parameters!廠區.Value</Value>
+          </QueryParameter>
+        </QueryParameters>
+        <CommandText>select distinct Building from PlantInfo
+where Plant = @廠區</CommandText>
+      </Query>
+      <Fields>
+        <Field Name="Building">
+          <DataField>Building</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+      </Fields>
+    </DataSet>
+    <DataSet Name="機房">
+      <Query>
+        <DataSourceName>DataSource1</DataSourceName>
+        <QueryParameters>
+          <QueryParameter Name="@廠區">
+            <Value>=Parameters!廠區.Value</Value>
+          </QueryParameter>
+          <QueryParameter Name="@樓棟">
+            <Value>=Parameters!樓棟.Value</Value>
+          </QueryParameter>
+        </QueryParameters>
+        <CommandText>select distinct ComputerRoom from PlantInfo
+where Plant = @廠區
+and Building = @樓棟</CommandText>
+      </Query>
+      <Fields>
+        <Field Name="ComputerRoom">
+          <DataField>ComputerRoom</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+      </Fields>
+    </DataSet>
+    <DataSet Name="機房運行報表">
+      <Query>
+        <DataSourceName>DataSource1</DataSourceName>
+        <QueryParameters>
+          <QueryParameter Name="@廠區">
+            <Value>=Parameters!廠區.Value</Value>
+          </QueryParameter>
+          <QueryParameter Name="@樓棟">
+            <Value>=Parameters!樓棟.Value</Value>
+          </QueryParameter>
+          <QueryParameter Name="@機房">
+            <Value>=Parameters!機房.Value</Value>
+          </QueryParameter>
+          <QueryParameter Name="@月份">
+            <Value>=Parameters!月份.Value</Value>
+          </QueryParameter>
+          <QueryParameter Name="@年份">
+            <Value>=Parameters!年份.Value</Value>
+          </QueryParameter>
+        </QueryParameters>
+        <CommandText>
+----------------------------------------------------結果匯總
+select
+ Voltage.日期, Voltage.SensorName, Voltage.AB, Voltage.AC, Voltage.BC,  Current1.A, Current1.B, Current1.C, PMax.A as 'PMaxA', PMax.B as 'PMaxB' ,PMax.C as 'PMaxC',PNow.A as 'PNowA', PNow.B as 'PNowB', PNow.C as 'PNowC'
+ ,Factor.A as 'FA' , Factor.B as 'FB', Factor.C as 'FC'
+ from
+(
+
+	select Voltage1.日期, MAX(Voltage1.值)MAXValue,Voltage1.SensorName, MAX(Voltage1.AB) AB  ,MAX(Voltage1.BC) BC, MAX(Voltage1.AC) AC
+
+	 from 
+	(
+		select Voltage.日期, Voltage.值, Voltage.交流電壓類別,Voltage.SensorName,
+		case when Voltage.交流電壓類別 = 'AB' then (select Voltage.值 where Voltage.交流電壓類別 = 'AB')
+		end as AB,
+		case when Voltage.交流電壓類別 = 'BC' then (select Voltage.值 where Voltage.交流電壓類別 = 'BC')
+		end as BC,
+		case when Voltage.交流電壓類別 = 'AC' then (select Voltage.值 where Voltage.交流電壓類別 = 'AC')
+		end as AC
+		 from
+			(
+			select  top 100 percent CONVERT(nchar(16),MinDiffTimeValue.CreatDate,120) as 日期, CONVERT(float,Value) as 值, MinDiffTimeValue.Type, SUBSTRING(MinDiffTimeValue.SensorName,1,4) SensorName,
+			case 
+			when (PATINDEX('%B%', MinDiffTimeValue.SensorName) &gt;0 and PATINDEX('%A%', MinDiffTimeValue.Type)&gt; 0) or (PATINDEX('%A%', MinDiffTimeValue.SensorName)&gt; 0 and PATINDEX('%B%', MinDiffTimeValue.Type)&gt; 0) then 'AB'
+			when (PATINDEX('%B%', MinDiffTimeValue.SensorName) &gt;0 and PATINDEX('%C%', MinDiffTimeValue.Type)&gt; 0) or (PATINDEX('%C%', MinDiffTimeValue.SensorName) &gt;0 and PATINDEX('%B%', MinDiffTimeValue.Type)&gt; 0) then 'BC'
+			when (PATINDEX('%A%', MinDiffTimeValue.SensorName) &gt;0 and PATINDEX('%C%', MinDiffTimeValue.Type)&gt; 0) or (PATINDEX('%C%', MinDiffTimeValue.SensorName)&gt; 0 and PATINDEX('%A%', MinDiffTimeValue.Type)&gt; 0) then 'AC'
+			end as 交流電壓類別
+			from 
+				(
+
+				select Result.* from
+				(
+					select A.ID, CONVERT(char(10),A.CreateDate,120) CreatDate,A.Value,C.Type,B.SensorName
+					,case
+					 when DATEPART(DD,A.CreateDate) =5 then ABS(DATEDIFF(SECOND,A.CreateDate,DATEADD(MINUTE, 6690,convert(datetime,  CONVERT(nchar(4),DATEPART(YEAR,GETDATE()))  +'-'+@月份+'-' +'01'))))
+					 when DATEPART(DD,A.CreateDate) =15 then ABS(DATEDIFF(SECOND,A.CreateDate,DATEADD(MINUTE, 21090,convert(datetime,  CONVERT(nchar(4),DATEPART(YEAR,GETDATE()))  +'-'+@月份+'-' +'01'))))
+					 when DATEPART(DD,A.CreateDate) =25 then ABS(DATEDIFF(SECOND,A.CreateDate,DATEADD(MINUTE, 35490,convert(datetime,  CONVERT(nchar(4),DATEPART(YEAR,GETDATE()))  +'-'+@月份+'-' +'01'))))
+					 end as DiffTime
+
+
+					 from 
+						MonitData as A, SensorInfo as B, AddressInfo as C, ControlInfo as D
+						where A.DataID = C.ID
+						and C.SensorID = B.ID
+						and C.ControlID = D.ID
+						and D.Factory = @廠區---SUBSTRING(B.SensorName,1,10)as 機櫃名稱,
+						and D.Building = @樓棟
+						and D.ComputerRoom = @機房 and isnumeric(A.Value)&gt;0  
+						and DATEPART(MM,CreateDate) = @月份 and DATEPART(YEAR,A.CreateDate) = @年份 --添加年份查詢,修改時間:2017-7-17 16:21:51 
+						and B.SensorName like '%相'
+						and (C.Type like '與%' )
+						and (DATEPART(DAY, A.CreateDate) = 5 or DATEPART(DAY, A.CreateDate) = 15 or DATEPART(DAY, A.CreateDate) = 25)
+						--and DATEPART(HH, A.CreateDate) = 15
+				)Result
+				 join
+				(-----------------------------這是作為一個查詢條件
+
+					select  GP_SensorName.SensorName,MIN(DiffTime) MinDiffTime , GP_SensorName.CreatDate 
+					from
+					(
+						select A.ID, CONVERT(char(10),A.CreateDate,120) CreatDate,A.Value,C.Type,B.SensorName
+						,case
+						 when DATEPART(DD,A.CreateDate) =5 then ABS(DATEDIFF(SECOND,A.CreateDate,DATEADD(MINUTE, 6690,convert(datetime,  CONVERT(nchar(4),DATEPART(YEAR,GETDATE()))  +'-'+@月份+'-' +'01'))))
+						 when DATEPART(DD,A.CreateDate) =15 then ABS(DATEDIFF(SECOND,A.CreateDate,DATEADD(MINUTE, 21090,convert(datetime,  CONVERT(nchar(4),DATEPART(YEAR,GETDATE()))  +'-'+@月份+'-' +'01'))))
+						 when DATEPART(DD,A.CreateDate) =25 then ABS(DATEDIFF(SECOND,A.CreateDate,DATEADD(MINUTE, 35490,convert(datetime,  CONVERT(nchar(4),DATEPART(YEAR,GETDATE()))  +'-'+@月份+'-' +'01'))))
+						 end as DiffTime
+
+
+						 from 
+							MonitData as A, SensorInfo as B, AddressInfo as C, ControlInfo as D
+							where A.DataID = C.ID
+							and C.SensorID = B.ID
+							and C.ControlID = D.ID
+							and D.Factory = @廠區---SUBSTRING(B.SensorName,1,10)as 機櫃名稱,
+							and D.Building = @樓棟
+							and D.ComputerRoom = @機房 and isnumeric(A.Value)&gt;0  
+							and DATEPART(MM,CreateDate) = @月份 and DATEPART(YEAR,A.CreateDate) = @年份 --添加年份查詢,修改時間:2017-7-17 16:21:51
+							and B.SensorName like '%相'
+							and (C.Type like '與%' )
+							and (DATEPART(DAY, A.CreateDate) = 5 or DATEPART(DAY, A.CreateDate) = 15 or DATEPART(DAY, A.CreateDate) = 25)
+							--and DATEPART(HH, A.CreateDate) = 15
+							
+					) GP_SensorName
+					group by GP_SensorName.SensorName,GP_SensorName.CreatDate
+				)Condition
+				on Result.CreatDate = Condition.CreatDate
+				and Result.DiffTime = Condition.MinDiffTime
+				and Result.SensorName = Condition.SensorName
+
+
+				) as MinDiffTimeValue
+			) 
+		as Voltage
+
+	)Voltage1
+	group by Voltage1.日期, Voltage1.SensorName
+) as Voltage
+left join
+(
+
+	select top 100 percent GP_Current.日期,GP_Current.SensorName, MAX(GP_Current.A)as A, MAX(GP_Current.B) as B ,MAX(GP_Current.C) as C from
+	(
+
+		select top 100 percent Current1.日期, Current1.值, Current1.三相電流類別,Current1.SensorName,
+		case when Current1.三相電流類別 = 'A' then (select top 100 percent Current1.值 where Current1.三相電流類別 = 'A')
+		end as A,
+		case when Current1.三相電流類別 = 'B' then (select top 100 percent Current1.值 where Current1.三相電流類別 = 'B')
+		end as B,
+		case when Current1.三相電流類別 = 'C' then (select top 100 percent Current1.值 where Current1.三相電流類別 = 'C')
+		end as C
+		 from
+			(
+			select top 100 percent   CONVERT(nchar(16),NearValue.CreatDate,120) as 日期, CONVERT(float,Value) as 值, NearValue.Type, SUBSTRING(NearValue.SensorName,1,4) SensorName,
+			case 
+			when PATINDEX('%C%', NearValue.SensorName) &gt;0  then 'C'
+			when PATINDEX('%B%', NearValue.SensorName) &gt;0  then 'B'
+			when PATINDEX('%A%', NearValue.SensorName) &gt;0  then 'A'
+			end as 三相電流類別
+			from 
+			(
+			
+				select top 100 percent Result.CreatDate, Result.Value, Result.SensorName,Result.Type from
+				(
+					select top 100 percent A.ID, CONVERT(char(10),A.CreateDate,120) CreatDate,A.Value,C.Type,B.SensorName
+					,case
+					 when DATEPART(DD,A.CreateDate) =5 then ABS(DATEDIFF(SECOND,A.CreateDate,DATEADD(MINUTE, 6690,convert(datetime,  CONVERT(nchar(4),DATEPART(YEAR,GETDATE()))  +'-'+@月份+'-' +'01'))))
+					 when DATEPART(DD,A.CreateDate) =15 then ABS(DATEDIFF(SECOND,A.CreateDate,DATEADD(MINUTE, 21090,convert(datetime,  CONVERT(nchar(4),DATEPART(YEAR,GETDATE()))  +'-'+@月份+'-' +'01'))))
+					 when DATEPART(DD,A.CreateDate) =25 then ABS(DATEDIFF(SECOND,A.CreateDate,DATEADD(MINUTE, 35490,convert(datetime,  CONVERT(nchar(4),DATEPART(YEAR,GETDATE()))  +'-'+@月份+'-' +'01'))))
+					 end as DiffTime
+
+
+					 from 
+							MonitData as A, SensorInfo as B, AddressInfo as C, ControlInfo as D
+							where A.DataID = C.ID
+							and C.SensorID = B.ID
+							and C.ControlID = D.ID
+							and D.Factory = @廠區
+							and D.Building = @樓棟
+							and D.ComputerRoom = @機房 and isnumeric(A.Value)&gt;0  
+							and DATEPART(MM,CreateDate) = @月份 and DATEPART(YEAR,A.CreateDate) = @年份 --添加年份查詢,修改時間:2017-7-17 16:21:51
+							and (DATEPART(DAY, A.CreateDate) = 5 or DATEPART(DAY, A.CreateDate) = 15 or DATEPART(DAY, A.CreateDate) = 25)
+
+							and B.SensorName like '%相'
+							and (C.Type = '電流' )
+				)Result
+				 join
+				(-----------------------------這是作為一個查詢條件
+
+					select top 100 percent  GP_SensorName.SensorName,MIN(DiffTime) MinDiffTime , GP_SensorName.CreatDate 
+					from
+					(
+						select top 100 percent A.ID, CONVERT(char(10),A.CreateDate,120) CreatDate,A.Value,C.Type,B.SensorName
+						,case
+						 when DATEPART(DD,A.CreateDate) =5 then ABS(DATEDIFF(SECOND,A.CreateDate,DATEADD(MINUTE, 6690,convert(datetime,  CONVERT(nchar(4),DATEPART(YEAR,GETDATE()))  +'-'+@月份+'-' +'01'))))
+						 when DATEPART(DD,A.CreateDate) =15 then ABS(DATEDIFF(SECOND,A.CreateDate,DATEADD(MINUTE, 21090,convert(datetime,  CONVERT(nchar(4),DATEPART(YEAR,GETDATE()))  +'-'+@月份+'-' +'01'))))
+						 when DATEPART(DD,A.CreateDate) =25 then ABS(DATEDIFF(SECOND,A.CreateDate,DATEADD(MINUTE, 35490,convert(datetime,  CONVERT(nchar(4),DATEPART(YEAR,GETDATE()))  +'-'+@月份+'-' +'01'))))
+						 end as DiffTime
+
+
+						 from 
+								MonitData as A, SensorInfo as B, AddressInfo as C, ControlInfo as D
+								where A.DataID = C.ID
+								and C.SensorID = B.ID
+								and C.ControlID = D.ID
+								and D.Factory = @廠區
+								and D.Building = @樓棟
+								and D.ComputerRoom = @機房 and isnumeric(A.Value)&gt;0  
+								and DATEPART(MM,CreateDate) = @月份 and DATEPART(YEAR,A.CreateDate) = @年份 --添加年份查詢,修改時間:2017-7-17 16:21:51
+								and (DATEPART(DAY, A.CreateDate) = 5 or DATEPART(DAY, A.CreateDate) = 15 or DATEPART(DAY, A.CreateDate) = 25)
+
+								and B.SensorName like '%相'
+								and (C.Type = '電流' )
+							
+					) GP_SensorName
+					group by GP_SensorName.SensorName,GP_SensorName.CreatDate
+				)Condition
+				on Result.CreatDate = Condition.CreatDate
+				and Result.DiffTime = Condition.MinDiffTime
+				and Result.SensorName = Condition.SensorName
+			) as NearValue
+		) 
+		as Current1
+		order by 日期
+	)GP_Current
+	group by GP_Current.日期, GP_Current.SensorName
+) as Current1
+on Voltage.日期 = Current1.日期
+and Voltage.SensorName = Current1.SensorName
+left join
+
+(
+
+	select top 100 percent GP_Current.日期,GP_Current.SensorName, MAX(GP_Current.A)as A, MAX(GP_Current.B) as B ,MAX(GP_Current.C) as C from
+	(
+
+		select top 100 percent Current1.日期, Current1.值, Current1.三相電流類別,Current1.SensorName,
+		case when Current1.三相電流類別 = 'A' then (select top 100 percent Current1.值 where Current1.三相電流類別 = 'A')
+		end as A,
+		case when Current1.三相電流類別 = 'B' then (select top 100 percent Current1.值 where Current1.三相電流類別 = 'B')
+		end as B,
+		case when Current1.三相電流類別 = 'C' then (select top 100 percent Current1.值 where Current1.三相電流類別 = 'C')
+		end as C
+		 from
+			(
+			select top 100 percent   CONVERT(nchar(16),NearValue.CreatDate,120) as 日期, CONVERT(float,Value) as 值, NearValue.Type, SUBSTRING(NearValue.SensorName,1,4) SensorName,
+			case 
+			when PATINDEX('%C%', NearValue.SensorName) &gt;0  then 'C'
+			when PATINDEX('%B%', NearValue.SensorName) &gt;0  then 'B'
+			when PATINDEX('%A%', NearValue.SensorName) &gt;0  then 'A'
+			end as 三相電流類別
+			from 
+			(
+			
+
+				-----------------------------------------------------------------最大功率
+				select CONVERT(char(10),Powered.固定日期,120) as CreatDate, Powered.SensorName, MAX(Powered.值) Value, Powered.Type from
+				(
+						select  top 100 percent CONVERT(nchar(16),CreateDate,120) as 日期, CONVERT(float,Value) as 值, C.Type, SUBSTRING(B.SensorName,1,10) SensorName
+						, CONVERT(nchar(16),DATEADD(MINUTE, 6690,convert(datetime,  CONVERT(nchar(4),DATEPART(YEAR,GETDATE()))  +'-'+@月份+'-' +'01')),120) as 固定日期		
+						from 
+						MonitData as A, SensorInfo as B, AddressInfo as C, ControlInfo as D
+						where A.DataID = C.ID
+						and C.SensorID = B.ID
+						and C.ControlID = D.ID
+						and D.Factory = @廠區
+						and D.Building = @樓棟
+						and D.ComputerRoom = @機房 and isnumeric(A.Value)&gt;0  
+						and DATEPART(MM,CreateDate) = @月份 and DATEPART(YEAR,A.CreateDate) = @年份 --添加年份查詢,修改時間:2017-7-17 16:21:51
+						and B.SensorName like '%相'
+						and (C.Type = '有功功率' )
+						and A.CreateDate &gt;= convert(datetime,  CONVERT(nchar(4),DATEPART(YEAR,GETDATE()))  +'-'+@月份+'-' +'01')
+						and A.CreateDate &lt; DATEADD(MINUTE, 6690,convert(datetime,  CONVERT(nchar(4),DATEPART(YEAR,GETDATE()))  +'-'+@月份+'-' +'01'))
+
+				) Powered
+				group by Powered.固定日期, Powered.SensorName,Powered.Type
+				union
+				-----------------------------------------------------------------5到15號最大功率
+				select CONVERT(char(10),Powered.固定日期,120) as CreatDate, Powered.SensorName, MAX(Powered.值) Value, Powered.Type from
+				(
+						select  top 100 percent CONVERT(nchar(16),CreateDate,120) as 日期, CONVERT(float,Value) as 值, C.Type, SUBSTRING(B.SensorName,1,40) SensorName
+						, CONVERT(nchar(10),DATEADD(MINUTE, 21090,convert(datetime,  CONVERT(nchar(4),DATEPART(YEAR,GETDATE()))  +'-'+@月份+'-' +'01')),120) as 固定日期		
+						from 
+						MonitData as A, SensorInfo as B, AddressInfo as C, ControlInfo as D
+						where A.DataID = C.ID
+						and C.SensorID = B.ID
+						and C.ControlID = D.ID
+						and D.Factory = @廠區
+						and D.Building = @樓棟
+						and D.ComputerRoom = @機房 and isnumeric(A.Value)&gt;0  
+						and DATEPART(MM,CreateDate) = @月份 and DATEPART(YEAR,A.CreateDate) = @年份 --添加年份查詢,修改時間:2017-7-17 16:21:51
+						and B.SensorName like '%相'
+						and (C.Type = '有功功率' )
+						and A.CreateDate &gt;= DATEADD(MINUTE, 6690,convert(datetime,  CONVERT(nchar(4),DATEPART(YEAR,GETDATE()))  +'-'+@月份+'-' +'01'))
+						and A.CreateDate &lt; DATEADD(MINUTE, 21090,convert(datetime,  CONVERT(nchar(4),DATEPART(YEAR,GETDATE()))  +'-'+@月份+'-' +'01'))
+				) Powered
+				group by Powered.固定日期, Powered.SensorName,Powered.Type
+				union
+
+				-----------------------------------------------------------------15到25號最大功率
+				select CONVERT(char(10),Powered.固定日期,120) as CreatDate, Powered.SensorName, MAX(Powered.值) Value, Powered.Type from
+				(
+						select  top 100 percent CONVERT(nchar(16),CreateDate,120) as 日期, CONVERT(float,Value) as 值, C.Type, SUBSTRING(B.SensorName,1,40) SensorName
+						, CONVERT(nchar(10),DATEADD(MINUTE, 35490,convert(datetime,  CONVERT(nchar(4),DATEPART(YEAR,GETDATE()))  +'-'+@月份+'-' +'01')),120) as 固定日期		
+						from 
+						MonitData as A, SensorInfo as B, AddressInfo as C, ControlInfo as D
+						where A.DataID = C.ID
+						and C.SensorID = B.ID
+						and C.ControlID = D.ID
+						and D.Factory = @廠區
+						and D.Building = @樓棟
+						and D.ComputerRoom = @機房 and isnumeric(A.Value)&gt;0  
+						and DATEPART(MM,CreateDate) = @月份 and DATEPART(YEAR,A.CreateDate) = @年份 --添加年份查詢,修改時間:2017-7-17 16:21:51
+						and B.SensorName like '%相'
+						and (C.Type = '有功功率' )
+						and A.CreateDate &gt;= DATEADD(MINUTE, 21090,convert(datetime,  CONVERT(nchar(4),DATEPART(YEAR,GETDATE()))  +'-'+@月份+'-' +'01'))
+						and A.CreateDate &lt; DATEADD(MINUTE, 35490,convert(datetime,  CONVERT(nchar(4),DATEPART(YEAR,GETDATE()))  +'-'+@月份+'-' +'01'))
+				) Powered
+				group by Powered.固定日期, Powered.SensorName,Powered.Type
+			) as NearValue
+		) 
+		as Current1
+		order by 日期
+	)GP_Current
+	group by GP_Current.日期, GP_Current.SensorName
+) as PMax
+on Voltage.日期 = PMax.日期
+and Voltage.SensorName = PMax.SensorName
+left join 
+(
+
+	select top 100 percent GP_Current.日期,GP_Current.SensorName, MAX(GP_Current.A)as A, MAX(GP_Current.B) as B ,MAX(GP_Current.C) as C from
+	(
+
+		select top 100 percent Current1.日期, Current1.值, Current1.三相電流類別,Current1.SensorName,
+		case when Current1.三相電流類別 = 'A' then (select top 100 percent Current1.值 where Current1.三相電流類別 = 'A')
+		end as A,
+		case when Current1.三相電流類別 = 'B' then (select top 100 percent Current1.值 where Current1.三相電流類別 = 'B')
+		end as B,
+		case when Current1.三相電流類別 = 'C' then (select top 100 percent Current1.值 where Current1.三相電流類別 = 'C')
+		end as C
+		 from
+			(
+			select top 100 percent   CONVERT(nchar(16),NearValue.CreatDate,120) as 日期, CONVERT(float,Value) as 值, NearValue.Type, SUBSTRING(NearValue.SensorName,1,4) SensorName,
+			case 
+			when PATINDEX('%C%', NearValue.SensorName) &gt;0  then 'C'
+			when PATINDEX('%B%', NearValue.SensorName) &gt;0  then 'B'
+			when PATINDEX('%A%', NearValue.SensorName) &gt;0  then 'A'
+			end as 三相電流類別
+			from 
+			(
+			
+				select Result.* from
+				(
+					select A.ID, CONVERT(char(10),A.CreateDate,120) CreatDate,A.Value,C.Type,B.SensorName
+					,case
+					 when DATEPART(DD,A.CreateDate) =5 then ABS(DATEDIFF(SECOND,A.CreateDate,DATEADD(MINUTE, 6690,convert(datetime,  CONVERT(nchar(4),DATEPART(YEAR,GETDATE()))  +'-'+@月份+'-' +'01'))))
+					 when DATEPART(DD,A.CreateDate) =15 then ABS(DATEDIFF(SECOND,A.CreateDate,DATEADD(MINUTE, 21090,convert(datetime,  CONVERT(nchar(4),DATEPART(YEAR,GETDATE()))  +'-'+@月份+'-' +'01'))))
+					 when DATEPART(DD,A.CreateDate) =25 then ABS(DATEDIFF(SECOND,A.CreateDate,DATEADD(MINUTE, 35490,convert(datetime,  CONVERT(nchar(4),DATEPART(YEAR,GETDATE()))  +'-'+@月份+'-' +'01'))))
+					 end as DiffTime
+
+
+					 from 
+						MonitData as A, SensorInfo as B, AddressInfo as C, ControlInfo as D
+						where A.DataID = C.ID
+						and C.SensorID = B.ID
+						and C.ControlID = D.ID
+						and D.Factory = @廠區
+						and D.Building = @樓棟
+						and D.ComputerRoom = @機房 and isnumeric(A.Value)&gt;0  
+						and DATEPART(MM,CreateDate) = @月份 and DATEPART(YEAR,A.CreateDate) = @年份 --添加年份查詢,修改時間:2017-7-17 16:21:51
+						and B.SensorName like '%相'
+						and (C.Type = '有功功率' )
+						and (DATEPART(DAY, A.CreateDate) = 5 or DATEPART(DAY, A.CreateDate) = 15 or DATEPART(DAY, A.CreateDate) = 25)
+				)Result
+				 join
+				(-----------------------------這是作為一個查詢條件
+
+					select  GP_SensorName.SensorName,MIN(DiffTime) MinDiffTime , GP_SensorName.CreatDate 
+					from
+					(
+						select A.ID, CONVERT(char(10),A.CreateDate,120) CreatDate,A.Value,C.Type,B.SensorName
+						,case
+						 when DATEPART(DD,A.CreateDate) =5 then ABS(DATEDIFF(SECOND,A.CreateDate,DATEADD(MINUTE, 6690,convert(datetime,  CONVERT(nchar(4),DATEPART(YEAR,GETDATE()))  +'-'+@月份+'-' +'01'))))
+						 when DATEPART(DD,A.CreateDate) =15 then ABS(DATEDIFF(SECOND,A.CreateDate,DATEADD(MINUTE, 21090,convert(datetime,  CONVERT(nchar(4),DATEPART(YEAR,GETDATE()))  +'-'+@月份+'-' +'01'))))
+						 when DATEPART(DD,A.CreateDate) =25 then ABS(DATEDIFF(SECOND,A.CreateDate,DATEADD(MINUTE, 35490,convert(datetime,  CONVERT(nchar(4),DATEPART(YEAR,GETDATE()))  +'-'+@月份+'-' +'01'))))
+						 end as DiffTime
+
+
+						 from 
+							MonitData as A, SensorInfo as B, AddressInfo as C, ControlInfo as D
+							where A.DataID = C.ID
+							and C.SensorID = B.ID
+							and C.ControlID = D.ID
+							and D.Factory = @廠區
+							and D.Building = @樓棟
+							and D.ComputerRoom = @機房 and isnumeric(A.Value)&gt;0  
+							and DATEPART(MM,CreateDate) = @月份 and DATEPART(YEAR,A.CreateDate) = @年份 --添加年份查詢,修改時間:2017-7-17 16:21:51
+							and B.SensorName like '%相'
+							and (C.Type = '有功功率' )
+							and (DATEPART(DAY, A.CreateDate) = 5 or DATEPART(DAY, A.CreateDate) = 15 or DATEPART(DAY, A.CreateDate) = 25)
+					) GP_SensorName
+					group by GP_SensorName.SensorName,GP_SensorName.CreatDate
+				)Condition
+				on Result.CreatDate = Condition.CreatDate
+				and Result.DiffTime = Condition.MinDiffTime
+				and Result.SensorName = Condition.SensorName
+			) as NearValue
+		) 
+		as Current1
+		order by 日期
+	)GP_Current
+	group by GP_Current.日期, GP_Current.SensorName
+
+) as PNow
+on Voltage.日期 = PNow.日期
+and Voltage.SensorName = PNow.SensorName
+left join
+
+(
+
+select top 100 percent GP_Current.日期,GP_Current.SensorName, MAX(GP_Current.A)as A, MAX(GP_Current.B) as B ,MAX(GP_Current.C) as C from
+(
+
+	select top 100 percent Current1.日期, Current1.值, Current1.三相電流類別,Current1.SensorName,
+	case when Current1.三相電流類別 = 'A' then (select top 100 percent Current1.值 where Current1.三相電流類別 = 'A')
+	end as A,
+	case when Current1.三相電流類別 = 'B' then (select top 100 percent Current1.值 where Current1.三相電流類別 = 'B')
+	end as B,
+	case when Current1.三相電流類別 = 'C' then (select top 100 percent Current1.值 where Current1.三相電流類別 = 'C')
+	end as C
+	 from
+		(
+		select top 100 percent   CONVERT(nchar(16),NearValue.CreatDate,120) as 日期, CONVERT(float,Value) as 值, NearValue.Type, SUBSTRING(NearValue.SensorName,1,4) SensorName,
+		case 
+		when PATINDEX('%C%', NearValue.SensorName) &gt;0  then 'C'
+		when PATINDEX('%B%', NearValue.SensorName) &gt;0  then 'B'
+		when PATINDEX('%A%', NearValue.SensorName) &gt;0  then 'A'
+		end as 三相電流類別
+		from 
+		(
+		
+----------------------------------------------------------------------------分割線，以下為求出的最接近時間點的數據
+
+			select Result.* from
+			(
+				select A.ID, CONVERT(char(10),A.CreateDate,120) CreatDate,A.Value,C.Type,B.SensorName
+				,case
+				 when DATEPART(DD,A.CreateDate) =5 then ABS(DATEDIFF(SECOND,A.CreateDate,DATEADD(MINUTE, 6690,convert(datetime,  CONVERT(nchar(4),DATEPART(YEAR,GETDATE()))  +'-'+@月份+'-' +'01'))))
+				 when DATEPART(DD,A.CreateDate) =15 then ABS(DATEDIFF(SECOND,A.CreateDate,DATEADD(MINUTE, 21090,convert(datetime,  CONVERT(nchar(4),DATEPART(YEAR,GETDATE()))  +'-'+@月份+'-' +'01'))))
+				 when DATEPART(DD,A.CreateDate) =25 then ABS(DATEDIFF(SECOND,A.CreateDate,DATEADD(MINUTE, 35490,convert(datetime,  CONVERT(nchar(4),DATEPART(YEAR,GETDATE()))  +'-'+@月份+'-' +'01'))))
+				 end as DiffTime
+
+
+				 from 
+					MonitData as A, SensorInfo as B, AddressInfo as C, ControlInfo as D
+					where A.DataID = C.ID
+					and C.SensorID = B.ID
+					and C.ControlID = D.ID
+					and D.Factory = @廠區
+					and D.Building = @樓棟
+					and D.ComputerRoom = @機房 and isnumeric(A.Value)&gt;0  
+					and DATEPART(MM,CreateDate) = @月份 and DATEPART(YEAR,A.CreateDate) = @年份 --添加年份查詢,修改時間:2017-7-17 16:21:51
+					and B.SensorName like '%相'
+					and (C.Type = '功率因數' )
+					and (DATEPART(DAY, A.CreateDate) = 5 or DATEPART(DAY, A.CreateDate) = 15 or DATEPART(DAY, A.CreateDate) = 25)
+			)Result
+			 join
+			(-----------------------------這是作為一個查詢條件
+
+				select  GP_SensorName.SensorName,MIN(DiffTime) MinDiffTime , GP_SensorName.CreatDate 
+				from
+				(
+					select A.ID, CONVERT(char(10),A.CreateDate,120) CreatDate,A.Value,C.Type,B.SensorName
+					,case
+					 when DATEPART(DD,A.CreateDate) =5 then ABS(DATEDIFF(SECOND,A.CreateDate,DATEADD(MINUTE, 6690,convert(datetime,  CONVERT(nchar(4),DATEPART(YEAR,GETDATE()))  +'-'+@月份+'-' +'01'))))
+					 when DATEPART(DD,A.CreateDate) =15 then ABS(DATEDIFF(SECOND,A.CreateDate,DATEADD(MINUTE, 21090,convert(datetime,  CONVERT(nchar(4),DATEPART(YEAR,GETDATE()))  +'-'+@月份+'-' +'01'))))
+					 when DATEPART(DD,A.CreateDate) =25 then ABS(DATEDIFF(SECOND,A.CreateDate,DATEADD(MINUTE, 35490,convert(datetime,  CONVERT(nchar(4),DATEPART(YEAR,GETDATE()))  +'-'+@月份+'-' +'01'))))
+					 end as DiffTime
+
+
+					 from 
+						MonitData as A, SensorInfo as B, AddressInfo as C, ControlInfo as D
+						where A.DataID = C.ID
+						and C.SensorID = B.ID
+						and C.ControlID = D.ID
+						and D.Factory = @廠區
+						and D.Building = @樓棟
+						and D.ComputerRoom = @機房 and isnumeric(A.Value)&gt;0  
+						and DATEPART(MM,CreateDate) = @月份 and DATEPART(YEAR,A.CreateDate) = @年份 --添加年份查詢,修改時間:2017-7-17 16:21:51
+						and B.SensorName like '%相'
+						and (C.Type = '功率因數' )
+						and (DATEPART(DAY, A.CreateDate) = 5 or DATEPART(DAY, A.CreateDate) = 15 or DATEPART(DAY, A.CreateDate) = 25)
+						
+				) GP_SensorName
+				group by GP_SensorName.SensorName,GP_SensorName.CreatDate
+			)Condition
+			on Result.CreatDate = Condition.CreatDate
+			and Result.DiffTime = Condition.MinDiffTime
+			and Result.SensorName = Condition.SensorName
+----------------------------------------------------------------------------分割線，以上為求出的最接近時間點的數據	
+		) as NearValue
+	) 
+	as Current1
+	order by 日期
+)GP_Current
+group by GP_Current.日期, GP_Current.SensorName
+) as Factor
+on Voltage.日期 = Factor.日期
+and Voltage.SensorName = Factor.SensorName</CommandText>
+      </Query>
+      <Fields>
+        <Field Name="日期">
+          <DataField>日期</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="SensorName">
+          <DataField>SensorName</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="AB">
+          <DataField>AB</DataField>
+          <rd:TypeName>System.Double</rd:TypeName>
+        </Field>
+        <Field Name="AC">
+          <DataField>AC</DataField>
+          <rd:TypeName>System.Double</rd:TypeName>
+        </Field>
+        <Field Name="BC">
+          <DataField>BC</DataField>
+          <rd:TypeName>System.Double</rd:TypeName>
+        </Field>
+        <Field Name="A">
+          <DataField>A</DataField>
+          <rd:TypeName>System.Double</rd:TypeName>
+        </Field>
+        <Field Name="B">
+          <DataField>B</DataField>
+          <rd:TypeName>System.Double</rd:TypeName>
+        </Field>
+        <Field Name="C">
+          <DataField>C</DataField>
+          <rd:TypeName>System.Double</rd:TypeName>
+        </Field>
+        <Field Name="PMaxA">
+          <DataField>PMaxA</DataField>
+          <rd:TypeName>System.Double</rd:TypeName>
+        </Field>
+        <Field Name="PMaxB">
+          <DataField>PMaxB</DataField>
+          <rd:TypeName>System.Double</rd:TypeName>
+        </Field>
+        <Field Name="PMaxC">
+          <DataField>PMaxC</DataField>
+          <rd:TypeName>System.Double</rd:TypeName>
+        </Field>
+        <Field Name="PNowA">
+          <DataField>PNowA</DataField>
+          <rd:TypeName>System.Double</rd:TypeName>
+        </Field>
+        <Field Name="PNowB">
+          <DataField>PNowB</DataField>
+          <rd:TypeName>System.Double</rd:TypeName>
+        </Field>
+        <Field Name="PNowC">
+          <DataField>PNowC</DataField>
+          <rd:TypeName>System.Double</rd:TypeName>
+        </Field>
+        <Field Name="FA">
+          <DataField>FA</DataField>
+          <rd:TypeName>System.Double</rd:TypeName>
+        </Field>
+        <Field Name="FB">
+          <DataField>FB</DataField>
+          <rd:TypeName>System.Double</rd:TypeName>
+        </Field>
+        <Field Name="FC">
+          <DataField>FC</DataField>
+          <rd:TypeName>System.Double</rd:TypeName>
+        </Field>
+      </Fields>
+    </DataSet>
+    <DataSet Name="defaultMonth">
+      <Query>
+        <DataSourceName>DataSource1</DataSourceName>
+        <CommandText>
+			select DATEPART(MONTH,GETDATE())</CommandText>
+      </Query>
+      <Fields>
+        <Field Name="ID">
+          <DataField />
+          <rd:TypeName>System.Int32</rd:TypeName>
+        </Field>
+      </Fields>
+    </DataSet>
+  </DataSets>
+  <ReportSections>
+    <ReportSection>
+      <Body>
+        <ReportItems>
+          <Tablix Name="Tablix1">
+            <TablixCorner>
+              <TablixCornerRows>
+                <TablixCornerRow>
+                  <TablixCornerCell>
+                    <CellContents>
+                      <Textbox Name="Textbox377">
+                        <CanGrow>true</CanGrow>
+                        <KeepTogether>true</KeepTogether>
+                        <Paragraphs>
+                          <Paragraph>
+                            <TextRuns>
+                              <TextRun>
+                                <Value>設備</Value>
+                                <Style>
+                                  <FontFamily>Tahoma</FontFamily>
+                                  <FontSize>11pt</FontSize>
+                                  <FontWeight>Bold</FontWeight>
+                                  <Color>White</Color>
+                                </Style>
+                              </TextRun>
+                            </TextRuns>
+                            <Style>
+                              <TextAlign>Center</TextAlign>
+                            </Style>
+                          </Paragraph>
+                        </Paragraphs>
+                        <rd:DefaultName>Textbox359</rd:DefaultName>
+                        <Style>
+                          <Border>
+                            <Color>#7292cc</Color>
+                            <Style>Solid</Style>
+                          </Border>
+                          <BackgroundColor>#4c68a2</BackgroundColor>
+                          <VerticalAlign>Middle</VerticalAlign>
+                          <PaddingLeft>2pt</PaddingLeft>
+                          <PaddingRight>2pt</PaddingRight>
+                          <PaddingTop>2pt</PaddingTop>
+                          <PaddingBottom>2pt</PaddingBottom>
+                        </Style>
+                      </Textbox>
+                      <ColSpan>2</ColSpan>
+                    </CellContents>
+                  </TablixCornerCell>
+                  <TablixCornerCell />
+                </TablixCornerRow>
+                <TablixCornerRow>
+                  <TablixCornerCell>
+                    <CellContents>
+                      <Textbox Name="Textbox376">
+                        <CanGrow>true</CanGrow>
+                        <KeepTogether>true</KeepTogether>
+                        <Paragraphs>
+                          <Paragraph>
+                            <TextRuns>
+                              <TextRun>
+                                <Value>採集時間</Value>
+                                <Style>
+                                  <FontFamily>Tahoma</FontFamily>
+                                  <FontSize>11pt</FontSize>
+                                  <FontWeight>Bold</FontWeight>
+                                  <Color>White</Color>
+                                </Style>
+                              </TextRun>
+                            </TextRuns>
+                            <Style>
+                              <TextAlign>Center</TextAlign>
+                            </Style>
+                          </Paragraph>
+                        </Paragraphs>
+                        <rd:DefaultName>Textbox360</rd:DefaultName>
+                        <Style>
+                          <Border>
+                            <Color>#7292cc</Color>
+                            <Style>Solid</Style>
+                          </Border>
+                          <BackgroundColor>#4c68a2</BackgroundColor>
+                          <VerticalAlign>Middle</VerticalAlign>
+                          <PaddingLeft>2pt</PaddingLeft>
+                          <PaddingRight>2pt</PaddingRight>
+                          <PaddingTop>2pt</PaddingTop>
+                          <PaddingBottom>2pt</PaddingBottom>
+                        </Style>
+                      </Textbox>
+                      <ColSpan>2</ColSpan>
+                    </CellContents>
+                  </TablixCornerCell>
+                  <TablixCornerCell />
+                </TablixCornerRow>
+              </TablixCornerRows>
+            </TablixCorner>
+            <TablixBody>
+              <TablixColumns>
+                <TablixColumn>
+                  <Width>25mm</Width>
+                </TablixColumn>
+              </TablixColumns>
+              <TablixRows>
+                <TablixRow>
+                  <Height>6mm</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="AB1">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Sum(Fields!AB.Value)</Value>
+                                  <Style>
+                                    <Format>f2</Format>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>AB1</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>Solid</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+                <TablixRow>
+                  <Height>6mm</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="AC1">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Sum(Fields!AC.Value)</Value>
+                                  <Style>
+                                    <Format>f2</Format>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>AC1</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>Solid</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+                <TablixRow>
+                  <Height>6mm</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="BC1">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Sum(Fields!BC.Value)</Value>
+                                  <Style>
+                                    <Format>f2</Format>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>BC1</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>Solid</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+                <TablixRow>
+                  <Height>6mm</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="A1">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Sum(Fields!A.Value)</Value>
+                                  <Style>
+                                    <Format>f2</Format>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>A1</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>Solid</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+                <TablixRow>
+                  <Height>6mm</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="B1">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Sum(Fields!B.Value)</Value>
+                                  <Style>
+                                    <Format>f2</Format>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>B1</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>Solid</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+                <TablixRow>
+                  <Height>6mm</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="C1">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Sum(Fields!C.Value)</Value>
+                                  <Style>
+                                    <Format>f2</Format>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>C1</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>Solid</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+                <TablixRow>
+                  <Height>6mm</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="PMaxA1">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Sum(Fields!PMaxA.Value)</Value>
+                                  <Style>
+                                    <Format>f2</Format>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>PMaxA1</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>Solid</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+                <TablixRow>
+                  <Height>6mm</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="PMaxB1">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Sum(Fields!PMaxB.Value)</Value>
+                                  <Style>
+                                    <Format>f2</Format>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>PMaxB1</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>Solid</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+                <TablixRow>
+                  <Height>6mm</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="PMaxC1">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Sum(Fields!PMaxC.Value)</Value>
+                                  <Style>
+                                    <Format>f2</Format>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>PMaxC1</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>Solid</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+                <TablixRow>
+                  <Height>6mm</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="PNowA1">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Sum(Fields!PNowA.Value)</Value>
+                                  <Style>
+                                    <Format>f2</Format>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>PNowA1</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>Solid</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+                <TablixRow>
+                  <Height>6mm</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="PNowB1">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Sum(Fields!PNowB.Value)</Value>
+                                  <Style>
+                                    <Format>f2</Format>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>PNowB1</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>Solid</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+                <TablixRow>
+                  <Height>6mm</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="PNowC1">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Sum(Fields!PNowC.Value)</Value>
+                                  <Style>
+                                    <Format>f2</Format>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>PNowC1</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>Solid</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+                <TablixRow>
+                  <Height>6mm</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="FA1">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Sum(Fields!FA.Value)</Value>
+                                  <Style>
+                                    <Format>f2</Format>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>FA1</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>Solid</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+                <TablixRow>
+                  <Height>6mm</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="FB1">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Sum(Fields!FB.Value)</Value>
+                                  <Style>
+                                    <Format>f2</Format>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>FB1</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>Solid</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+                <TablixRow>
+                  <Height>6mm</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="FC1">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Sum(Fields!FC.Value)</Value>
+                                  <Style>
+                                    <Format>f2</Format>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>FC1</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>Solid</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+              </TablixRows>
+            </TablixBody>
+            <TablixColumnHierarchy>
+              <TablixMembers>
+                <TablixMember>
+                  <Group Name="SensorName1">
+                    <GroupExpressions>
+                      <GroupExpression>=Fields!SensorName.Value</GroupExpression>
+                    </GroupExpressions>
+                  </Group>
+                  <SortExpressions>
+                    <SortExpression>
+                      <Value>=Fields!SensorName.Value</Value>
+                    </SortExpression>
+                  </SortExpressions>
+                  <TablixHeader>
+                    <Size>6mm</Size>
+                    <CellContents>
+                      <Textbox Name="SensorName2">
+                        <CanGrow>true</CanGrow>
+                        <KeepTogether>true</KeepTogether>
+                        <Paragraphs>
+                          <Paragraph>
+                            <TextRuns>
+                              <TextRun>
+                                <Value>=Fields!SensorName.Value</Value>
+                                <Style>
+                                  <FontFamily>Tahoma</FontFamily>
+                                  <FontWeight>Bold</FontWeight>
+                                  <Color>#465678</Color>
+                                </Style>
+                              </TextRun>
+                            </TextRuns>
+                            <Style>
+                              <TextAlign>Center</TextAlign>
+                            </Style>
+                          </Paragraph>
+                        </Paragraphs>
+                        <rd:DefaultName>SensorName</rd:DefaultName>
+                        <Style>
+                          <Border>
+                            <Color>#c6daf8</Color>
+                            <Style>Solid</Style>
+                          </Border>
+                          <BackgroundColor>#9eb6e4</BackgroundColor>
+                          <VerticalAlign>Middle</VerticalAlign>
+                          <PaddingLeft>2pt</PaddingLeft>
+                          <PaddingRight>2pt</PaddingRight>
+                          <PaddingTop>2pt</PaddingTop>
+                          <PaddingBottom>2pt</PaddingBottom>
+                        </Style>
+                      </Textbox>
+                    </CellContents>
+                  </TablixHeader>
+                  <TablixMembers>
+                    <TablixMember>
+                      <Group Name="日期1">
+                        <GroupExpressions>
+                          <GroupExpression>=Fields!日期.Value</GroupExpression>
+                        </GroupExpressions>
+                      </Group>
+                      <SortExpressions>
+                        <SortExpression>
+                          <Value>=Fields!日期.Value</Value>
+                        </SortExpression>
+                      </SortExpressions>
+                      <TablixMembers>
+                        <TablixMember>
+                          <TablixHeader>
+                            <Size>6mm</Size>
+                            <CellContents>
+                              <Textbox Name="日期2">
+                                <CanGrow>true</CanGrow>
+                                <KeepTogether>true</KeepTogether>
+                                <Paragraphs>
+                                  <Paragraph>
+                                    <TextRuns>
+                                      <TextRun>
+                                        <Value>=Fields!日期.Value</Value>
+                                        <Style>
+                                          <FontFamily>Tahoma</FontFamily>
+                                          <FontWeight>Bold</FontWeight>
+                                          <Color>#4c68a2</Color>
+                                        </Style>
+                                      </TextRun>
+                                    </TextRuns>
+                                    <Style>
+                                      <TextAlign>Center</TextAlign>
+                                    </Style>
+                                  </Paragraph>
+                                </Paragraphs>
+                                <rd:DefaultName>日期</rd:DefaultName>
+                                <Style>
+                                  <Border>
+                                    <Color>#e6eefc</Color>
+                                    <Style>Solid</Style>
+                                  </Border>
+                                  <BackgroundColor>#c6daf8</BackgroundColor>
+                                  <VerticalAlign>Middle</VerticalAlign>
+                                  <PaddingLeft>2pt</PaddingLeft>
+                                  <PaddingRight>2pt</PaddingRight>
+                                  <PaddingTop>2pt</PaddingTop>
+                                  <PaddingBottom>2pt</PaddingBottom>
+                                </Style>
+                              </Textbox>
+                            </CellContents>
+                          </TablixHeader>
+                        </TablixMember>
+                      </TablixMembers>
+                    </TablixMember>
+                  </TablixMembers>
+                </TablixMember>
+              </TablixMembers>
+            </TablixColumnHierarchy>
+            <TablixRowHierarchy>
+              <TablixMembers>
+                <TablixMember>
+                  <TablixHeader>
+                    <Size>33.73125mm</Size>
+                    <CellContents>
+                      <Textbox Name="Textbox362">
+                        <CanGrow>true</CanGrow>
+                        <KeepTogether>true</KeepTogether>
+                        <Paragraphs>
+                          <Paragraph>
+                            <TextRuns>
+                              <TextRun>
+                                <Value>線電壓( V )</Value>
+                                <Style>
+                                  <FontStyle>Normal</FontStyle>
+                                  <FontFamily>微軟正黑體</FontFamily>
+                                  <FontSize>12pt</FontSize>
+                                  <FontWeight>Bold</FontWeight>
+                                  <TextDecoration>None</TextDecoration>
+                                  <Color>White</Color>
+                                </Style>
+                              </TextRun>
+                            </TextRuns>
+                            <Style>
+                              <TextAlign>Center</TextAlign>
+                            </Style>
+                          </Paragraph>
+                        </Paragraphs>
+                        <rd:DefaultName>Textbox361</rd:DefaultName>
+                        <Style>
+                          <Border>
+                            <Color>#7292cc</Color>
+                            <Style>Solid</Style>
+                          </Border>
+                          <BackgroundColor>#4c68a2</BackgroundColor>
+                          <VerticalAlign>Middle</VerticalAlign>
+                          <PaddingLeft>2pt</PaddingLeft>
+                          <PaddingRight>2pt</PaddingRight>
+                          <PaddingTop>2pt</PaddingTop>
+                          <PaddingBottom>2pt</PaddingBottom>
+                        </Style>
+                      </Textbox>
+                    </CellContents>
+                  </TablixHeader>
+                  <TablixMembers>
+                    <TablixMember>
+                      <Group Name="RowGroup">
+                        <GroupExpressions>
+                          <GroupExpression />
+                        </GroupExpressions>
+                      </Group>
+                      <TablixHeader>
+                        <Size>25mm</Size>
+                        <CellContents>
+                          <Textbox Name="Textbox344">
+                            <CanGrow>true</CanGrow>
+                            <KeepTogether>true</KeepTogether>
+                            <Paragraphs>
+                              <Paragraph>
+                                <TextRuns>
+                                  <TextRun>
+                                    <Value>AB</Value>
+                                    <Style>
+                                      <FontFamily>Tahoma</FontFamily>
+                                      <FontSize>11pt</FontSize>
+                                      <FontWeight>Bold</FontWeight>
+                                      <Color>White</Color>
+                                    </Style>
+                                  </TextRun>
+                                </TextRuns>
+                                <Style>
+                                  <TextAlign>Center</TextAlign>
+                                </Style>
+                              </Paragraph>
+                            </Paragraphs>
+                            <rd:DefaultName>Textbox338</rd:DefaultName>
+                            <Style>
+                              <Border>
+                                <Color>#7292cc</Color>
+                                <Style>Solid</Style>
+                              </Border>
+                              <BackgroundColor>#4c68a2</BackgroundColor>
+                              <VerticalAlign>Middle</VerticalAlign>
+                              <PaddingLeft>2pt</PaddingLeft>
+                              <PaddingRight>2pt</PaddingRight>
+                              <PaddingTop>2pt</PaddingTop>
+                              <PaddingBottom>2pt</PaddingBottom>
+                            </Style>
+                          </Textbox>
+                        </CellContents>
+                      </TablixHeader>
+                      <TablixMembers>
+                        <TablixMember />
+                      </TablixMembers>
+                    </TablixMember>
+                    <TablixMember>
+                      <TablixHeader>
+                        <Size>25mm</Size>
+                        <CellContents>
+                          <Textbox Name="Textbox340">
+                            <CanGrow>true</CanGrow>
+                            <KeepTogether>true</KeepTogether>
+                            <Paragraphs>
+                              <Paragraph>
+                                <TextRuns>
+                                  <TextRun>
+                                    <Value>AC</Value>
+                                    <Style>
+                                      <FontFamily>Tahoma</FontFamily>
+                                      <FontSize>11pt</FontSize>
+                                      <FontWeight>Bold</FontWeight>
+                                      <Color>White</Color>
+                                    </Style>
+                                  </TextRun>
+                                </TextRuns>
+                                <Style>
+                                  <TextAlign>Center</TextAlign>
+                                </Style>
+                              </Paragraph>
+                            </Paragraphs>
+                            <rd:DefaultName>Textbox339</rd:DefaultName>
+                            <Style>
+                              <Border>
+                                <Color>#7292cc</Color>
+                                <Style>Solid</Style>
+                              </Border>
+                              <BackgroundColor>#4c68a2</BackgroundColor>
+                              <VerticalAlign>Middle</VerticalAlign>
+                              <PaddingLeft>2pt</PaddingLeft>
+                              <PaddingRight>2pt</PaddingRight>
+                              <PaddingTop>2pt</PaddingTop>
+                              <PaddingBottom>2pt</PaddingBottom>
+                            </Style>
+                          </Textbox>
+                        </CellContents>
+                      </TablixHeader>
+                    </TablixMember>
+                    <TablixMember>
+                      <TablixHeader>
+                        <Size>25mm</Size>
+                        <CellContents>
+                          <Textbox Name="Textbox342">
+                            <CanGrow>true</CanGrow>
+                            <KeepTogether>true</KeepTogether>
+                            <Paragraphs>
+                              <Paragraph>
+                                <TextRuns>
+                                  <TextRun>
+                                    <Value>BC</Value>
+                                    <Style>
+                                      <FontFamily>Tahoma</FontFamily>
+                                      <FontSize>11pt</FontSize>
+                                      <FontWeight>Bold</FontWeight>
+                                      <Color>White</Color>
+                                    </Style>
+                                  </TextRun>
+                                </TextRuns>
+                                <Style>
+                                  <TextAlign>Center</TextAlign>
+                                </Style>
+                              </Paragraph>
+                            </Paragraphs>
+                            <rd:DefaultName>Textbox341</rd:DefaultName>
+                            <Style>
+                              <Border>
+                                <Color>#7292cc</Color>
+                                <Style>Solid</Style>
+                              </Border>
+                              <BackgroundColor>#4c68a2</BackgroundColor>
+                              <VerticalAlign>Middle</VerticalAlign>
+                              <PaddingLeft>2pt</PaddingLeft>
+                              <PaddingRight>2pt</PaddingRight>
+                              <PaddingTop>2pt</PaddingTop>
+                              <PaddingBottom>2pt</PaddingBottom>
+                            </Style>
+                          </Textbox>
+                        </CellContents>
+                      </TablixHeader>
+                    </TablixMember>
+                  </TablixMembers>
+                </TablixMember>
+                <TablixMember>
+                  <TablixHeader>
+                    <Size>33.73125mm</Size>
+                    <CellContents>
+                      <Textbox Name="Textbox365">
+                        <CanGrow>true</CanGrow>
+                        <KeepTogether>true</KeepTogether>
+                        <Paragraphs>
+                          <Paragraph>
+                            <TextRuns>
+                              <TextRun>
+                                <Value>三相電流( I )</Value>
+                                <Style>
+                                  <FontStyle>Normal</FontStyle>
+                                  <FontFamily>微軟正黑體</FontFamily>
+                                  <FontSize>12pt</FontSize>
+                                  <FontWeight>Bold</FontWeight>
+                                  <TextDecoration>None</TextDecoration>
+                                  <Color>White</Color>
+                                </Style>
+                              </TextRun>
+                            </TextRuns>
+                            <Style>
+                              <TextAlign>Center</TextAlign>
+                            </Style>
+                          </Paragraph>
+                        </Paragraphs>
+                        <rd:DefaultName>Textbox364</rd:DefaultName>
+                        <Style>
+                          <Border>
+                            <Color>#7292cc</Color>
+                            <Style>Solid</Style>
+                          </Border>
+                          <BackgroundColor>#4c68a2</BackgroundColor>
+                          <VerticalAlign>Middle</VerticalAlign>
+                          <PaddingLeft>2pt</PaddingLeft>
+                          <PaddingRight>2pt</PaddingRight>
+                          <PaddingTop>2pt</PaddingTop>
+                          <PaddingBottom>2pt</PaddingBottom>
+                        </Style>
+                      </Textbox>
+                    </CellContents>
+                  </TablixHeader>
+                  <TablixMembers>
+                    <TablixMember>
+                      <TablixHeader>
+                        <Size>25mm</Size>
+                        <CellContents>
+                          <Textbox Name="Textbox349">
+                            <CanGrow>true</CanGrow>
+                            <KeepTogether>true</KeepTogether>
+                            <Paragraphs>
+                              <Paragraph>
+                                <TextRuns>
+                                  <TextRun>
+                                    <Value>A</Value>
+                                    <Style>
+                                      <FontFamily>Tahoma</FontFamily>
+                                      <FontSize>11pt</FontSize>
+                                      <FontWeight>Bold</FontWeight>
+                                      <Color>White</Color>
+                                    </Style>
+                                  </TextRun>
+                                </TextRuns>
+                                <Style>
+                                  <TextAlign>Center</TextAlign>
+                                </Style>
+                              </Paragraph>
+                            </Paragraphs>
+                            <rd:DefaultName>Textbox343</rd:DefaultName>
+                            <Style>
+                              <Border>
+                                <Color>#7292cc</Color>
+                                <Style>Solid</Style>
+                              </Border>
+                              <BackgroundColor>#4c68a2</BackgroundColor>
+                              <VerticalAlign>Middle</VerticalAlign>
+                              <PaddingLeft>2pt</PaddingLeft>
+                              <PaddingRight>2pt</PaddingRight>
+                              <PaddingTop>2pt</PaddingTop>
+                              <PaddingBottom>2pt</PaddingBottom>
+                            </Style>
+                          </Textbox>
+                        </CellContents>
+                      </TablixHeader>
+                    </TablixMember>
+                    <TablixMember>
+                      <TablixHeader>
+                        <Size>25mm</Size>
+                        <CellContents>
+                          <Textbox Name="Textbox357">
+                            <CanGrow>true</CanGrow>
+                            <KeepTogether>true</KeepTogether>
+                            <Paragraphs>
+                              <Paragraph>
+                                <TextRuns>
+                                  <TextRun>
+                                    <Value>B</Value>
+                                    <Style>
+                                      <FontFamily>Tahoma</FontFamily>
+                                      <FontSize>11pt</FontSize>
+                                      <FontWeight>Bold</FontWeight>
+                                      <Color>White</Color>
+                                    </Style>
+                                  </TextRun>
+                                </TextRuns>
+                                <Style>
+                                  <TextAlign>Center</TextAlign>
+                                </Style>
+                              </Paragraph>
+                            </Paragraphs>
+                            <rd:DefaultName>Textbox345</rd:DefaultName>
+                            <Style>
+                              <Border>
+                                <Color>#7292cc</Color>
+                                <Style>Solid</Style>
+                              </Border>
+                              <BackgroundColor>#4c68a2</BackgroundColor>
+                              <VerticalAlign>Middle</VerticalAlign>
+                              <PaddingLeft>2pt</PaddingLeft>
+                              <PaddingRight>2pt</PaddingRight>
+                              <PaddingTop>2pt</PaddingTop>
+                              <PaddingBottom>2pt</PaddingBottom>
+                            </Style>
+                          </Textbox>
+                        </CellContents>
+                      </TablixHeader>
+                    </TablixMember>
+                    <TablixMember>
+                      <TablixHeader>
+                        <Size>25mm</Size>
+                        <CellContents>
+                          <Textbox Name="Textbox372">
+                            <CanGrow>true</CanGrow>
+                            <KeepTogether>true</KeepTogether>
+                            <Paragraphs>
+                              <Paragraph>
+                                <TextRuns>
+                                  <TextRun>
+                                    <Value>C</Value>
+                                    <Style>
+                                      <FontFamily>Tahoma</FontFamily>
+                                      <FontSize>11pt</FontSize>
+                                      <FontWeight>Bold</FontWeight>
+                                      <Color>White</Color>
+                                    </Style>
+                                  </TextRun>
+                                </TextRuns>
+                                <Style>
+                                  <TextAlign>Center</TextAlign>
+                                </Style>
+                              </Paragraph>
+                            </Paragraphs>
+                            <rd:DefaultName>Textbox347</rd:DefaultName>
+                            <Style>
+                              <Border>
+                                <Color>#7292cc</Color>
+                                <Style>Solid</Style>
+                              </Border>
+                              <BackgroundColor>#4c68a2</BackgroundColor>
+                              <VerticalAlign>Middle</VerticalAlign>
+                              <PaddingLeft>2pt</PaddingLeft>
+                              <PaddingRight>2pt</PaddingRight>
+                              <PaddingTop>2pt</PaddingTop>
+                              <PaddingBottom>2pt</PaddingBottom>
+                            </Style>
+                          </Textbox>
+                        </CellContents>
+                      </TablixHeader>
+                    </TablixMember>
+                  </TablixMembers>
+                </TablixMember>
+                <TablixMember>
+                  <TablixHeader>
+                    <Size>33.73125mm</Size>
+                    <CellContents>
+                      <Textbox Name="Textbox368">
+                        <CanGrow>true</CanGrow>
+                        <KeepTogether>true</KeepTogether>
+                        <Paragraphs>
+                          <Paragraph>
+                            <TextRuns>
+                              <TextRun>
+                                <Value>最大功率（W）</Value>
+                                <Style>
+                                  <FontFamily>Tahoma</FontFamily>
+                                  <FontSize>11pt</FontSize>
+                                  <FontWeight>Bold</FontWeight>
+                                  <Color>White</Color>
+                                </Style>
+                              </TextRun>
+                            </TextRuns>
+                            <Style>
+                              <TextAlign>Center</TextAlign>
+                            </Style>
+                          </Paragraph>
+                        </Paragraphs>
+                        <rd:DefaultName>Textbox367</rd:DefaultName>
+                        <Style>
+                          <Border>
+                            <Color>#7292cc</Color>
+                            <Style>Solid</Style>
+                          </Border>
+                          <BottomBorder>
+                            <Style>None</Style>
+                          </BottomBorder>
+                          <BackgroundColor>#4c68a2</BackgroundColor>
+                          <VerticalAlign>Middle</VerticalAlign>
+                          <PaddingLeft>2pt</PaddingLeft>
+                          <PaddingRight>2pt</PaddingRight>
+                          <PaddingTop>2pt</PaddingTop>
+                          <PaddingBottom>2pt</PaddingBottom>
+                        </Style>
+                      </Textbox>
+                    </CellContents>
+                  </TablixHeader>
+                  <TablixMembers>
+                    <TablixMember>
+                      <TablixHeader>
+                        <Size>25mm</Size>
+                        <CellContents>
+                          <Textbox Name="Textbox351">
+                            <CanGrow>true</CanGrow>
+                            <KeepTogether>true</KeepTogether>
+                            <Paragraphs>
+                              <Paragraph>
+                                <TextRuns>
+                                  <TextRun>
+                                    <Value>A</Value>
+                                    <Style>
+                                      <FontFamily>Tahoma</FontFamily>
+                                      <FontSize>11pt</FontSize>
+                                      <FontWeight>Bold</FontWeight>
+                                      <Color>White</Color>
+                                    </Style>
+                                  </TextRun>
+                                </TextRuns>
+                                <Style>
+                                  <TextAlign>Center</TextAlign>
+                                </Style>
+                              </Paragraph>
+                            </Paragraphs>
+                            <rd:DefaultName>Textbox343</rd:DefaultName>
+                            <Style>
+                              <Border>
+                                <Color>#7292cc</Color>
+                                <Style>Solid</Style>
+                              </Border>
+                              <BackgroundColor>#4c68a2</BackgroundColor>
+                              <VerticalAlign>Middle</VerticalAlign>
+                              <PaddingLeft>2pt</PaddingLeft>
+                              <PaddingRight>2pt</PaddingRight>
+                              <PaddingTop>2pt</PaddingTop>
+                              <PaddingBottom>2pt</PaddingBottom>
+                            </Style>
+                          </Textbox>
+                        </CellContents>
+                      </TablixHeader>
+                    </TablixMember>
+                    <TablixMember>
+                      <TablixHeader>
+                        <Size>25mm</Size>
+                        <CellContents>
+                          <Textbox Name="Textbox358">
+                            <CanGrow>true</CanGrow>
+                            <KeepTogether>true</KeepTogether>
+                            <Paragraphs>
+                              <Paragraph>
+                                <TextRuns>
+                                  <TextRun>
+                                    <Value>B</Value>
+                                    <Style>
+                                      <FontFamily>Tahoma</FontFamily>
+                                      <FontSize>11pt</FontSize>
+                                      <FontWeight>Bold</FontWeight>
+                                      <Color>White</Color>
+                                    </Style>
+                                  </TextRun>
+                                </TextRuns>
+                                <Style>
+                                  <TextAlign>Center</TextAlign>
+                                </Style>
+                              </Paragraph>
+                            </Paragraphs>
+                            <rd:DefaultName>Textbox345</rd:DefaultName>
+                            <Style>
+                              <Border>
+                                <Color>#7292cc</Color>
+                                <Style>Solid</Style>
+                              </Border>
+                              <BackgroundColor>#4c68a2</BackgroundColor>
+                              <VerticalAlign>Middle</VerticalAlign>
+                              <PaddingLeft>2pt</PaddingLeft>
+                              <PaddingRight>2pt</PaddingRight>
+                              <PaddingTop>2pt</PaddingTop>
+                              <PaddingBottom>2pt</PaddingBottom>
+                            </Style>
+                          </Textbox>
+                        </CellContents>
+                      </TablixHeader>
+                    </TablixMember>
+                    <TablixMember>
+                      <TablixHeader>
+                        <Size>25mm</Size>
+                        <CellContents>
+                          <Textbox Name="Textbox373">
+                            <CanGrow>true</CanGrow>
+                            <KeepTogether>true</KeepTogether>
+                            <Paragraphs>
+                              <Paragraph>
+                                <TextRuns>
+                                  <TextRun>
+                                    <Value>C</Value>
+                                    <Style>
+                                      <FontFamily>Tahoma</FontFamily>
+                                      <FontSize>11pt</FontSize>
+                                      <FontWeight>Bold</FontWeight>
+                                      <Color>White</Color>
+                                    </Style>
+                                  </TextRun>
+                                </TextRuns>
+                                <Style>
+                                  <TextAlign>Center</TextAlign>
+                                </Style>
+                              </Paragraph>
+                            </Paragraphs>
+                            <rd:DefaultName>Textbox347</rd:DefaultName>
+                            <Style>
+                              <Border>
+                                <Color>#7292cc</Color>
+                                <Style>Solid</Style>
+                              </Border>
+                              <BackgroundColor>#4c68a2</BackgroundColor>
+                              <VerticalAlign>Middle</VerticalAlign>
+                              <PaddingLeft>2pt</PaddingLeft>
+                              <PaddingRight>2pt</PaddingRight>
+                              <PaddingTop>2pt</PaddingTop>
+                              <PaddingBottom>2pt</PaddingBottom>
+                            </Style>
+                          </Textbox>
+                        </CellContents>
+                      </TablixHeader>
+                    </TablixMember>
+                  </TablixMembers>
+                </TablixMember>
+                <TablixMember>
+                  <TablixHeader>
+                    <Size>33.73125mm</Size>
+                    <CellContents>
+                      <Textbox Name="Textbox29">
+                        <CanGrow>true</CanGrow>
+                        <KeepTogether>true</KeepTogether>
+                        <Paragraphs>
+                          <Paragraph>
+                            <TextRuns>
+                              <TextRun>
+                                <Value>當前功率（Ｗ）</Value>
+                                <Style>
+                                  <FontFamily>Tahoma</FontFamily>
+                                  <FontSize>11pt</FontSize>
+                                  <FontWeight>Bold</FontWeight>
+                                  <Color>White</Color>
+                                </Style>
+                              </TextRun>
+                            </TextRuns>
+                            <Style>
+                              <TextAlign>Center</TextAlign>
+                            </Style>
+                          </Paragraph>
+                        </Paragraphs>
+                        <rd:DefaultName>Textbox28</rd:DefaultName>
+                        <Style>
+                          <Border>
+                            <Color>CornflowerBlue</Color>
+                            <Style>Solid</Style>
+                          </Border>
+                          <TopBorder>
+                            <Color>CornflowerBlue</Color>
+                            <Style>Solid</Style>
+                            <Width>1pt</Width>
+                          </TopBorder>
+                          <BottomBorder>
+                            <Color>CornflowerBlue</Color>
+                            <Style>Solid</Style>
+                            <Width>1pt</Width>
+                          </BottomBorder>
+                          <LeftBorder>
+                            <Color>CornflowerBlue</Color>
+                            <Style>Solid</Style>
+                            <Width>1pt</Width>
+                          </LeftBorder>
+                          <RightBorder>
+                            <Color>CornflowerBlue</Color>
+                            <Style>Solid</Style>
+                            <Width>1pt</Width>
+                          </RightBorder>
+                          <BackgroundColor>#4c68a2</BackgroundColor>
+                          <VerticalAlign>Middle</VerticalAlign>
+                          <PaddingLeft>2pt</PaddingLeft>
+                          <PaddingRight>2pt</PaddingRight>
+                          <PaddingTop>2pt</PaddingTop>
+                          <PaddingBottom>2pt</PaddingBottom>
+                        </Style>
+                      </Textbox>
+                    </CellContents>
+                  </TablixHeader>
+                  <TablixMembers>
+                    <TablixMember>
+                      <TablixHeader>
+                        <Size>25mm</Size>
+                        <CellContents>
+                          <Textbox Name="Textbox352">
+                            <CanGrow>true</CanGrow>
+                            <KeepTogether>true</KeepTogether>
+                            <Paragraphs>
+                              <Paragraph>
+                                <TextRuns>
+                                  <TextRun>
+                                    <Value>A</Value>
+                                    <Style>
+                                      <FontFamily>Tahoma</FontFamily>
+                                      <FontSize>11pt</FontSize>
+                                      <FontWeight>Bold</FontWeight>
+                                      <Color>White</Color>
+                                    </Style>
+                                  </TextRun>
+                                </TextRuns>
+                                <Style>
+                                  <TextAlign>Center</TextAlign>
+                                </Style>
+                              </Paragraph>
+                            </Paragraphs>
+                            <rd:DefaultName>Textbox343</rd:DefaultName>
+                            <Style>
+                              <Border>
+                                <Color>#7292cc</Color>
+                                <Style>Solid</Style>
+                              </Border>
+                              <BackgroundColor>#4c68a2</BackgroundColor>
+                              <VerticalAlign>Middle</VerticalAlign>
+                              <PaddingLeft>2pt</PaddingLeft>
+                              <PaddingRight>2pt</PaddingRight>
+                              <PaddingTop>2pt</PaddingTop>
+                              <PaddingBottom>2pt</PaddingBottom>
+                            </Style>
+                          </Textbox>
+                        </CellContents>
+                      </TablixHeader>
+                    </TablixMember>
+                    <TablixMember>
+                      <TablixHeader>
+                        <Size>25mm</Size>
+                        <CellContents>
+                          <Textbox Name="Textbox363">
+                            <CanGrow>true</CanGrow>
+                            <KeepTogether>true</KeepTogether>
+                            <Paragraphs>
+                              <Paragraph>
+                                <TextRuns>
+                                  <TextRun>
+                                    <Value>B</Value>
+                                    <Style>
+                                      <FontFamily>Tahoma</FontFamily>
+                                      <FontSize>11pt</FontSize>
+                                      <FontWeight>Bold</FontWeight>
+                                      <Color>White</Color>
+                                    </Style>
+                                  </TextRun>
+                                </TextRuns>
+                                <Style>
+                                  <TextAlign>Center</TextAlign>
+                                </Style>
+                              </Paragraph>
+                            </Paragraphs>
+                            <rd:DefaultName>Textbox345</rd:DefaultName>
+                            <Style>
+                              <Border>
+                                <Color>#7292cc</Color>
+                                <Style>Solid</Style>
+                              </Border>
+                              <BackgroundColor>#4c68a2</BackgroundColor>
+                              <VerticalAlign>Middle</VerticalAlign>
+                              <PaddingLeft>2pt</PaddingLeft>
+                              <PaddingRight>2pt</PaddingRight>
+                              <PaddingTop>2pt</PaddingTop>
+                              <PaddingBottom>2pt</PaddingBottom>
+                            </Style>
+                          </Textbox>
+                        </CellContents>
+                      </TablixHeader>
+                    </TablixMember>
+                    <TablixMember>
+                      <TablixHeader>
+                        <Size>25mm</Size>
+                        <CellContents>
+                          <Textbox Name="Textbox374">
+                            <CanGrow>true</CanGrow>
+                            <KeepTogether>true</KeepTogether>
+                            <Paragraphs>
+                              <Paragraph>
+                                <TextRuns>
+                                  <TextRun>
+                                    <Value>C</Value>
+                                    <Style>
+                                      <FontFamily>Tahoma</FontFamily>
+                                      <FontSize>11pt</FontSize>
+                                      <FontWeight>Bold</FontWeight>
+                                      <Color>White</Color>
+                                    </Style>
+                                  </TextRun>
+                                </TextRuns>
+                                <Style>
+                                  <TextAlign>Center</TextAlign>
+                                </Style>
+                              </Paragraph>
+                            </Paragraphs>
+                            <rd:DefaultName>Textbox347</rd:DefaultName>
+                            <Style>
+                              <Border>
+                                <Color>#7292cc</Color>
+                                <Style>Solid</Style>
+                              </Border>
+                              <BackgroundColor>#4c68a2</BackgroundColor>
+                              <VerticalAlign>Middle</VerticalAlign>
+                              <PaddingLeft>2pt</PaddingLeft>
+                              <PaddingRight>2pt</PaddingRight>
+                              <PaddingTop>2pt</PaddingTop>
+                              <PaddingBottom>2pt</PaddingBottom>
+                            </Style>
+                          </Textbox>
+                        </CellContents>
+                      </TablixHeader>
+                    </TablixMember>
+                  </TablixMembers>
+                </TablixMember>
+                <TablixMember>
+                  <TablixHeader>
+                    <Size>33.73125mm</Size>
+                    <CellContents>
+                      <Textbox Name="Textbox32">
+                        <CanGrow>true</CanGrow>
+                        <KeepTogether>true</KeepTogether>
+                        <Paragraphs>
+                          <Paragraph>
+                            <TextRuns>
+                              <TextRun>
+                                <Value>功率因素</Value>
+                                <Style>
+                                  <FontFamily>Tahoma</FontFamily>
+                                  <FontSize>11pt</FontSize>
+                                  <FontWeight>Bold</FontWeight>
+                                  <Color>White</Color>
+                                </Style>
+                              </TextRun>
+                            </TextRuns>
+                            <Style>
+                              <TextAlign>Center</TextAlign>
+                            </Style>
+                          </Paragraph>
+                        </Paragraphs>
+                        <rd:DefaultName>Textbox31</rd:DefaultName>
+                        <Style>
+                          <Border>
+                            <Color>#7292cc</Color>
+                            <Style>None</Style>
+                          </Border>
+                          <BackgroundColor>#4c68a2</BackgroundColor>
+                          <VerticalAlign>Middle</VerticalAlign>
+                          <PaddingLeft>2pt</PaddingLeft>
+                          <PaddingRight>2pt</PaddingRight>
+                          <PaddingTop>2pt</PaddingTop>
+                          <PaddingBottom>2pt</PaddingBottom>
+                        </Style>
+                      </Textbox>
+                    </CellContents>
+                  </TablixHeader>
+                  <TablixMembers>
+                    <TablixMember>
+                      <TablixHeader>
+                        <Size>25mm</Size>
+                        <CellContents>
+                          <Textbox Name="Textbox356">
+                            <CanGrow>true</CanGrow>
+                            <KeepTogether>true</KeepTogether>
+                            <Paragraphs>
+                              <Paragraph>
+                                <TextRuns>
+                                  <TextRun>
+                                    <Value>A</Value>
+                                    <Style>
+                                      <FontFamily>Tahoma</FontFamily>
+                                      <FontSize>11pt</FontSize>
+                                      <FontWeight>Bold</FontWeight>
+                                      <Color>White</Color>
+                                    </Style>
+                                  </TextRun>
+                                </TextRuns>
+                                <Style>
+                                  <TextAlign>Center</TextAlign>
+                                </Style>
+                              </Paragraph>
+                            </Paragraphs>
+                            <rd:DefaultName>Textbox343</rd:DefaultName>
+                            <Style>
+                              <Border>
+                                <Color>#7292cc</Color>
+                                <Style>Solid</Style>
+                              </Border>
+                              <BackgroundColor>#4c68a2</BackgroundColor>
+                              <VerticalAlign>Middle</VerticalAlign>
+                              <PaddingLeft>2pt</PaddingLeft>
+                              <PaddingRight>2pt</PaddingRight>
+                              <PaddingTop>2pt</PaddingTop>
+                              <PaddingBottom>2pt</PaddingBottom>
+                            </Style>
+                          </Textbox>
+                        </CellContents>
+                      </TablixHeader>
+                    </TablixMember>
+                    <TablixMember>
+                      <TablixHeader>
+                        <Size>25mm</Size>
+                        <CellContents>
+                          <Textbox Name="Textbox366">
+                            <CanGrow>true</CanGrow>
+                            <KeepTogether>true</KeepTogether>
+                            <Paragraphs>
+                              <Paragraph>
+                                <TextRuns>
+                                  <TextRun>
+                                    <Value>B</Value>
+                                    <Style>
+                                      <FontFamily>Tahoma</FontFamily>
+                                      <FontSize>11pt</FontSize>
+                                      <FontWeight>Bold</FontWeight>
+                                      <Color>White</Color>
+                                    </Style>
+                                  </TextRun>
+                                </TextRuns>
+                                <Style>
+                                  <TextAlign>Center</TextAlign>
+                                </Style>
+                              </Paragraph>
+                            </Paragraphs>
+                            <rd:DefaultName>Textbox345</rd:DefaultName>
+                            <Style>
+                              <Border>
+                                <Color>#7292cc</Color>
+                                <Style>Solid</Style>
+                              </Border>
+                              <BackgroundColor>#4c68a2</BackgroundColor>
+                              <VerticalAlign>Middle</VerticalAlign>
+                              <PaddingLeft>2pt</PaddingLeft>
+                              <PaddingRight>2pt</PaddingRight>
+                              <PaddingTop>2pt</PaddingTop>
+                              <PaddingBottom>2pt</PaddingBottom>
+                            </Style>
+                          </Textbox>
+                        </CellContents>
+                      </TablixHeader>
+                    </TablixMember>
+                    <TablixMember>
+                      <TablixHeader>
+                        <Size>25mm</Size>
+                        <CellContents>
+                          <Textbox Name="Textbox375">
+                            <CanGrow>true</CanGrow>
+                            <KeepTogether>true</KeepTogether>
+                            <Paragraphs>
+                              <Paragraph>
+                                <TextRuns>
+                                  <TextRun>
+                                    <Value>C</Value>
+                                    <Style>
+                                      <FontFamily>Tahoma</FontFamily>
+                                      <FontSize>11pt</FontSize>
+                                      <FontWeight>Bold</FontWeight>
+                                      <Color>White</Color>
+                                    </Style>
+                                  </TextRun>
+                                </TextRuns>
+                                <Style>
+                                  <TextAlign>Center</TextAlign>
+                                </Style>
+                              </Paragraph>
+                            </Paragraphs>
+                            <rd:DefaultName>Textbox347</rd:DefaultName>
+                            <Style>
+                              <Border>
+                                <Color>#7292cc</Color>
+                                <Style>Solid</Style>
+                              </Border>
+                              <BackgroundColor>#4c68a2</BackgroundColor>
+                              <VerticalAlign>Middle</VerticalAlign>
+                              <PaddingLeft>2pt</PaddingLeft>
+                              <PaddingRight>2pt</PaddingRight>
+                              <PaddingTop>2pt</PaddingTop>
+                              <PaddingBottom>2pt</PaddingBottom>
+                            </Style>
+                          </Textbox>
+                        </CellContents>
+                      </TablixHeader>
+                    </TablixMember>
+                  </TablixMembers>
+                </TablixMember>
+              </TablixMembers>
+            </TablixRowHierarchy>
+            <DataSetName>機房運行報表</DataSetName>
+            <Top>0mm</Top>
+            <Left>0mm</Left>
+            <Height>102mm</Height>
+            <Width>83.73125mm</Width>
+            <Style>
+              <Border>
+                <Style>None</Style>
+              </Border>
+            </Style>
+          </Tablix>
+        </ReportItems>
+        <Height>102mm</Height>
+        <Style>
+          <Border>
+            <Style>None</Style>
+          </Border>
+        </Style>
+      </Body>
+      <Width>110.70792mm</Width>
+      <Page>
+        <PageFooter>
+          <Height>11.43mm</Height>
+          <PrintOnFirstPage>true</PrintOnFirstPage>
+          <PrintOnLastPage>true</PrintOnLastPage>
+          <ReportItems>
+            <Textbox Name="ExecutionTime">
+              <CanGrow>true</CanGrow>
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>=Globals!ExecutionTime</Value>
+                      <Style />
+                    </TextRun>
+                  </TextRuns>
+                  <Style>
+                    <TextAlign>Right</TextAlign>
+                  </Style>
+                </Paragraph>
+              </Paragraphs>
+              <rd:DefaultName>ExecutionTime</rd:DefaultName>
+              <Top>5.08mm</Top>
+              <Left>0mm</Left>
+              <Height>6.35mm</Height>
+              <Width>50.8mm</Width>
+              <Style>
+                <Border>
+                  <Style>None</Style>
+                </Border>
+                <PaddingLeft>2pt</PaddingLeft>
+                <PaddingRight>2pt</PaddingRight>
+                <PaddingTop>2pt</PaddingTop>
+                <PaddingBottom>2pt</PaddingBottom>
+              </Style>
+            </Textbox>
+          </ReportItems>
+          <Style>
+            <Border>
+              <Style>None</Style>
+            </Border>
+          </Style>
+        </PageFooter>
+        <PageHeight>29.7cm</PageHeight>
+        <PageWidth>21cm</PageWidth>
+        <LeftMargin>2cm</LeftMargin>
+        <RightMargin>2cm</RightMargin>
+        <TopMargin>2cm</TopMargin>
+        <BottomMargin>2cm</BottomMargin>
+        <ColumnSpacing>0.13cm</ColumnSpacing>
+        <Style />
+      </Page>
+    </ReportSection>
+  </ReportSections>
+  <ReportParameters>
+    <ReportParameter Name="廠區">
+      <DataType>String</DataType>
+      <DefaultValue>
+        <Values>
+          <Value>龍華</Value>
+        </Values>
+      </DefaultValue>
+      <Prompt>廠區</Prompt>
+      <ValidValues>
+        <DataSetReference>
+          <DataSetName>工廠下拉</DataSetName>
+          <ValueField>Plant</ValueField>
+          <LabelField>Plant</LabelField>
+        </DataSetReference>
+      </ValidValues>
+    </ReportParameter>
+    <ReportParameter Name="樓棟">
+      <DataType>String</DataType>
+      <DefaultValue>
+        <Values>
+          <Value>C8棟1樓</Value>
+        </Values>
+      </DefaultValue>
+      <Prompt>樓棟</Prompt>
+      <ValidValues>
+        <DataSetReference>
+          <DataSetName>樓棟</DataSetName>
+          <ValueField>Building</ValueField>
+          <LabelField>Building</LabelField>
+        </DataSetReference>
+      </ValidValues>
+    </ReportParameter>
+    <ReportParameter Name="機房">
+      <DataType>String</DataType>
+      <DefaultValue>
+        <Values>
+          <Value>A</Value>
+        </Values>
+      </DefaultValue>
+      <Prompt>機房</Prompt>
+      <ValidValues>
+        <DataSetReference>
+          <DataSetName>機房</DataSetName>
+          <ValueField>ComputerRoom</ValueField>
+          <LabelField>ComputerRoom</LabelField>
+        </DataSetReference>
+      </ValidValues>
+    </ReportParameter>
+    <ReportParameter Name="月份">
+      <DataType>String</DataType>
+      <DefaultValue>
+        <DataSetReference>
+          <DataSetName>defaultMonth</DataSetName>
+          <ValueField>ID</ValueField>
+        </DataSetReference>
+      </DefaultValue>
+      <AllowBlank>true</AllowBlank>
+      <Prompt>月份</Prompt>
+      <ValidValues>
+        <ParameterValues>
+          <ParameterValue>
+            <Value>1</Value>
+            <Label>1月</Label>
+          </ParameterValue>
+          <ParameterValue>
+            <Value>2</Value>
+            <Label>2月</Label>
+          </ParameterValue>
+          <ParameterValue>
+            <Value>3</Value>
+            <Label>3月</Label>
+          </ParameterValue>
+          <ParameterValue>
+            <Value>4</Value>
+            <Label>4月</Label>
+          </ParameterValue>
+          <ParameterValue>
+            <Value>5</Value>
+            <Label>5月</Label>
+          </ParameterValue>
+          <ParameterValue>
+            <Value>6</Value>
+            <Label>6月</Label>
+          </ParameterValue>
+          <ParameterValue>
+            <Value>7</Value>
+            <Label>7月</Label>
+          </ParameterValue>
+          <ParameterValue>
+            <Value>8</Value>
+            <Label>8月</Label>
+          </ParameterValue>
+          <ParameterValue>
+            <Value>9</Value>
+            <Label>9月</Label>
+          </ParameterValue>
+          <ParameterValue>
+            <Value>10</Value>
+            <Label>10月</Label>
+          </ParameterValue>
+          <ParameterValue>
+            <Value>11</Value>
+            <Label>11月</Label>
+          </ParameterValue>
+          <ParameterValue>
+            <Value>12</Value>
+            <Label>12月</Label>
+          </ParameterValue>
+        </ParameterValues>
+      </ValidValues>
+    </ReportParameter>
+    <ReportParameter Name="年份">
+      <DataType>String</DataType>
+      <DefaultValue>
+        <Values>
+          <Value>=Year(Globals!ExecutionTime)</Value>
+        </Values>
+      </DefaultValue>
+      <Prompt>年份</Prompt>
+    </ReportParameter>
+  </ReportParameters>
+  <EmbeddedImages>
+    <EmbeddedImage Name="報表多線框">
+      <MIMEType>image/png</MIMEType>
+      <ImageData>iVBORw0KGgoAAAANSUhEUgAAAfQAAACbCAIAAAAbYf7mAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAA7ESURBVHhe7drhoaSoFkXhiasD6ng6mk6mg3nPumeXHhUQFVRwfb8GsQCPsKvmzvz3PwBAdwh3AOgQ4Q4AHZrC/T8AQDcU7T/hrn9CIxZvEABGhHvziHgAa4R7J4h4AB7h3hWL+IHaAN6KcO8TEQ+8HOHeMyIeeC3CvX8W8QO1AbwA4f4iRDzwHoT761jED9QG0CPC/b2IeKBjhPvbEfFAlwh3fFjED9QG0DjCHTNEPNAHwh0BRDzQOsIdURbxA7UBtINwxzYiHmgO4Y5cRDzQEMId+1jED9QG8EiEOw4i4oEnI9xxikX8QG0Az0C4owwiHngUwh0lEfHAQxDuKM8ifqA2gMsR7qiIiH+qv78/b+bXn39q5/n359fPG/3vv99/demxPmt9/iprItxRncWBGniCKaV3BfwTw909yrSo6eLe76+OEO64iJ21gdq4z8Fsbybc7d9LRi8NeMIdV7MDpwZucDTbmwn3D3f9Y2PBi7szLAZcfJ9kqF5Cwh33sA2uBi41BdFPtu/PpZ2qxlgs3Ac7vosId6As2+YDtXGBRbY3Hu5u+aF5ht6c6Ql3oBLb72qgpmW23xXu1aeNCvwtagr39B+qpkVHwz0d2rn3FUC440Fs16uBKqZ0ScdYyI6/c2wj3HWpFsIdj2N7f6A2CjqT7YQ74Q4UYYdADZRwKttrhfuRpUxyczmJcAeuZ0dhoDaOi0XLlG1lpQKsfLifyEvCHbiRnQk1sF88BlsO9yJ5SbgDt7OToQZ2cAm+TLAnhPvUzmbDLwda+DzbZpDuL8BiyP2rJ9yBEDsfA7WxycdPPNyTkVP0tmLh7oI5MN/UG4x+cWNkWkxFuAOF2UFRA3Gz9Okq3Fcjeak+h3AHnsmOixpYW4TX
+E8P9OPdwiwldT3qS6cb0fdOiFzOtOz5X1s8fHaA8wh39sEMzUBtfU6SYeLiXlQqwaU1nwz06lHvsjSg9Eu6zWX3H7L7okgh3YD87PWpgHd3LBGs83N3y3VjuapUgTeT0v38u7T+qJ3kA4Y5u2bFS48XmMfMjHu7JFCp5WzB6A0uNmT2C+9x3MDf+6S+PoGnO2PhuCR/JmlVAuKNzdrAGar+ND7lf33/sLdxX6e5GT6/1sMD3SYj7Cvj1p8pCogh3vIUdMTXeYh5yY9I8INxd6k2LcYm5ZfEIs6zNj3Z/523SSzyMcMe72HEaqN23WeS55v3hvliZRBc4it7hBnRmCxjWFX/wGyWLeRzhjpeyc6VGn1zeWahFk7FWxkVjy03o13Ii3EPpPp/eP+S3h3AHOmWnS43OuOBSfDwm3CPZfircV+m+nNz1R4ffNivVZxw/baWYPoZwBxTxA7V7odwZIyeajBeHezQPowscJe6YP8Rqajfp0WxflOk7hX+c6DNfj3AHJnY81ejAJ3Zc2ESTcUqtZDRl3raYdcWH4fy+6AJHsTsCX0/zod0NR7J9NX5k4XL066Mkwh1YsvOpRtv+/vEps52daRnh7kIwcs8sJhf3LDMywT9C7GNudD9rdPEhobHDA+TfeQ3CHXey83DnCYj7rOyH2h0Y46deuH9Mt63nmUX7qjuW0gHfz84GHC7//j1v221+4Iztthh0slm41BNsfrgswh03Wp+EvP1/9HPH2AxqNG2s21iuaIoVM3sz8xe3TtlUNC58xl2uXnOlRwln+1Yh9m2wvWXdN3omwh33CR3CrG2+/mCV0zFj86jRqLFuU7l2xOlh39nmkRd6ZYEFxqwWPgvt6GO5gXMefXsdaXnlzfh3iQMId9wmtPHztvn6k2cPYS5N1+hhGes2lSsvfeISL2zK8tB0BQItNMEk9Ot5cV/44etE7SBS61p7l3DHXUJbPfNcrT9a64BE2bRqtGKsW4VyTe/EvcTh
+4nIqu+9IgH7Sevm5wAQzPuFDc9pqfv35G/gmSFuMNj3+XtW2LuGOm4R+WH0OzPFTkuVIqsTZmGo831jbq8I96Pt/8Hw+sVrINMy8K3/4Q0K7Me10uFd5Do9wxz1i2X7glOxS40hp6OefoLG2t4a7uBftljNdna1xtiv2rX746PaKCHegkGi2Hzglu1Q9UjaFGg801lbxWLnWzrrsbm7fOV1eRvhsy4Ty/fPRxTzjZ7a+D6bB03dOy1vMFO1YyL2vAMIdd5i2+ESbPdRVUPUj9Y34gdrPMdb29nD3ST3rm5YUSNlkvvtO9c3uT755wh0oIhAq45kK9JVU/Ug5NqMaTzDWVtWuXGtnUXaXuoswnZYUTtnZkmej+p6pIxD5IYQ7UMLsgJr0kVpaD7Dv85eyBapxr7FuG+X6uW9nSfeklnt/y5unrtj84x2///77N93iU3w2qO+Iro1wBwqY9vfocJB87RzgelrnvadsrFuiXFlZGJCfWtEY/piGia9xGGDd6fbEqtPvl/DqCHfgPH/SZO8+Xw+RPpJPYutV42Jj3XITbJBb2ezUcqMHxp56973S5DfG/JFCAxPuwFn+EI6iB6WgfVlRm61JjcuMhd0sxuwVZJUuM7X8wKEbXf+e9Nsadn7H+oGC2zLp9J7d83iHEO64VPgQnT4oGZ4V7kZLu+zojYXNKMbiTW1G0fTSErf6QcO3zabNfGfz/RKd/ntbaFTCHTgncgROH5QMTwz3kS1RjXrGwuYVY0q8zSDyryx+s4vQ+ArOvf3kk/39HevuPtyN2kBxsRPw+nA3tlA1ahgLm12MIfT8vTkZuBlaizHXDr//4+94erDcpUX3bPr5c+8rYBbu4z8s2HXgnHgyEO6O1lvj3I2FPVyMzVdTqsw5XyPeyXlfEu5rthZPHUC+RC5shvvug7DOhmbCfWTrVqOIsbCHi5HM3PZKPHptuK/Z6jx1ABHrxJ4Q7nFaPkcMOx0M9zXbfyNdBUzyF992
+uBfQ8M9KY4+hBrClWLgv2Eb01IF3Suc14Z7NHkYNIK5WuK/ZpvTUgTfgl3tReiYOEeKuC/c1250jXUWfkoFNuB9lz6YG4NwZ7gu2TT11oAfJn+6b4b64YVs//0E1hz2hGsCPB4X7mm1ZTx1oUOrnOOFegh6UY4Ifjw73Ndu7njrweGPc/v69ld2E+zn2wGrgrRoL9zXbxyNdxQNZZA8xvZndqR/5h70o3I09thp4n+bDfcE2tKcO3O7zY/onYQn3C+npOQjv01u4r9nO9tSBq/39axlOuN/BqqAGXqD/cF+zXe6pA9cg3O9jtVADXXtjuK/Zjh/pKio5EO6LG7a9+j+oblJJ2OpdI9wDbN976kARhPtjWGnUQF8I9yx2Bjx14ADC/WFUIXZ1Xwj3g+wweOrApgPhXgDhvs0qpQYaR7gXYwdjpKtYI9yfzeqlBppFuNdiJ8RTBwj3Fqhs7Ntm3RLu7u+hbzpxemRHHW9DuDfFyqcG2kG430lF+NLV7h0I98UN2/gPqoVZEdVAC1oM9/W5zbKc6tjPw5oRoSkcdXSGcG+WaknKt4Bw3+naiNCkjjqaRri3z2qqBh4pJ9xzwzT79BDux2kZjjoaEsnuYy/kAGK+FKunGniYtsM959NjZCxvjnYE7JvyWlrYl64+GeHeF5WVlH+YSuFe8Jyu/4WccE/ROh11PAfh3ikrrxq4285wD/zpczqS7swUPKeE+1lauaOOu6x3B+HeEVWZlL8b4Z41StPhvqZncdRxjfXuINx7ZNVWA5erFO5pbsAj58x9fI/lVMeypNNg0NN96WolkXBHl+wNq4ELEe47dRruC3pYRx3AIdpGbKQLEe47vSPc1/T4jjqAPdg8l2k73HM+Pa4vGu4Zo+yb8h1UEEcdwBY2zAUI96xRCPccKtGXrgIR2ihslToI96xRCPcDVDFHHcAc26OGtsN9l2i470K4n6AaOuoAiPjSCPedCPeiVNUvXcWLaSuwGU4rHu4H
+k3eLn5hw75aK7KgD78MGOKntcL8saW+YEj9UdkcdeAde+mGEexbC/Tn0Ihx1oF9607zrPXaGe9JVuUe4Y0av5ktX0SNecb7nhPvi3wASCHek6E056kAv9F55s0k9hvux/1L6FRyTcG+a3p2jDjSOt5mwM9y3/+Z+GOGO6+htOupAg3iDQYT7EuH+Tnq/X7qKdujN8e6++g73wHIjNsYk3N9Gr9tRBx6P92VqhPu5X84RbmbCHTfQBnDUgUfiHRHuhnDHbtoSjjrwGHoxr3w1hLsh3FGANsmXruIBXvhGaoT7Mfnj5If7EYQ7StGecdSBm7zqLdQN9+GT2WFIuKN/2kWOOnAhlb734lcM97EjLw8Jd7yR9tWXruISfde8Wri7Dw0y/vhdI9wzppWNMQl3XEPbzFEHqlGhuyt1tXAf7Mt3wh0I0MZz1IHSOitvzXAfTJ2DdC4S7kAWbUVHHSihm5LuDPekjVj8SEQj4Q4cpM35pas4QaVsuZjVw30w+/keDdwa4X4E4Y7Waa866sB+7RbwinB3IySikXAHatHuddSBPC0WbWe47/2b+2S4Lf1HEsIduI72s6MOxKlSjdTqsnDfVCPc8//mvoFwR/e0w790FSFNlOgx4e5+bj8v3NMVADqkDe+oA18PL8v5cC/CRfvzwt0v7tQXGNAynQFHHe+mWjyvGjnhXpD7nojazM+tcD9m9v0Sw+92YKJj4ajjlZ5WgYvDPSNCtwO7TrhnfO8Q7UCajsqXrr7Jcx786nDfitCcuK4T7unvHXId2E/Hx1FH7/S0tz7v1eGeitDcAK0U7hq26JgAZn4O7ow6OnXjM14e7gVUCncAN9Bh/tLVvujZrn26FsMdQLcsBD11dOHKJyLcATyaBaKnjmZd8xSEO4DGWDh66miKll5t8YQ7gOZZSo50tRGV1ky4A+iNxaWnjgcrvk7CHUD/LDo9dTyMFldieYQ7gDeyDPXU8Qznl0S4A8CH5elIV291ZiWE
+OwAEWLB66ricpt+5AMIdALJYwnrquMquSQl3ADjI0tZTR02aaWsuwh0AirHYHelqHekpCHcAqMXy11NHObFhCXcAuI5lsaeOczSWG41wB4A7WSiPdPWocRDCHQAexNLZU8ces48dGwIAUNUnqefUkfC///0fG8e7ARtxkPYAAAAASUVORK5CYII=</ImageData>
+    </EmbeddedImage>
+    <EmbeddedImage Name="用於機房日用電分析報表">
+      <MIMEType>image/png</MIMEType>
+      <ImageData>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</ImageData>
+    </EmbeddedImage>
+  </EmbeddedImages>
+  <rd:ReportUnitType>Cm</rd:ReportUnitType>
+  <rd:ReportID>f641c6b1-9f7c-44c6-aa85-4c2dba3cedb8</rd:ReportID>
+</Report>

@@ -1,0 +1,1386 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Report xmlns:rd="http://schemas.microsoft.com/SQLServer/reporting/reportdesigner" xmlns:cl="http://schemas.microsoft.com/sqlserver/reporting/2010/01/componentdefinition" xmlns="http://schemas.microsoft.com/sqlserver/reporting/2010/01/reportdefinition">
+  <AutoRefresh>0</AutoRefresh>
+  <DataSources>
+    <DataSource Name="DataSource1">
+      <DataSourceReference>/PDSS Reports/教學報表/DCMP/DCMP91</DataSourceReference>
+      <rd:SecurityType>DataBase</rd:SecurityType>
+      <rd:DataSourceID>90f5b1c5-9c93-42e5-b298-755d0dfc2fcb</rd:DataSourceID>
+    </DataSource>
+  </DataSources>
+  <DataSets>
+    <DataSet Name="工廠下拉">
+      <Query>
+        <DataSourceName>DataSource1</DataSourceName>
+        <CommandText>select distinct Plant from PlantInfo</CommandText>
+      </Query>
+      <Fields>
+        <Field Name="Plant">
+          <DataField>Plant</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+      </Fields>
+    </DataSet>
+    <DataSet Name="樓棟">
+      <Query>
+        <DataSourceName>DataSource1</DataSourceName>
+        <QueryParameters>
+          <QueryParameter Name="@廠區">
+            <Value>=Parameters!廠區.Value</Value>
+          </QueryParameter>
+        </QueryParameters>
+        <CommandText>select distinct Building from PlantInfo
+where Plant = @廠區</CommandText>
+      </Query>
+      <Fields>
+        <Field Name="Building">
+          <DataField>Building</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+      </Fields>
+    </DataSet>
+    <DataSet Name="機房">
+      <Query>
+        <DataSourceName>DataSource1</DataSourceName>
+        <QueryParameters>
+          <QueryParameter Name="@廠區">
+            <Value>=Parameters!廠區.Value</Value>
+          </QueryParameter>
+          <QueryParameter Name="@樓棟">
+            <Value>=Parameters!樓棟.Value</Value>
+          </QueryParameter>
+        </QueryParameters>
+        <CommandText>select distinct ComputerRoom from PlantInfo
+where Plant = @廠區
+and Building = @樓棟</CommandText>
+      </Query>
+      <Fields>
+        <Field Name="ComputerRoom">
+          <DataField>ComputerRoom</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+      </Fields>
+    </DataSet>
+    <DataSet Name="DefaultMonth">
+      <Query>
+        <DataSourceName>DataSource1</DataSourceName>
+        <CommandText>select datepart(MM,getdate()) as Month</CommandText>
+      </Query>
+      <Fields>
+        <Field Name="Month">
+          <DataField>Month</DataField>
+          <rd:TypeName>System.Int32</rd:TypeName>
+        </Field>
+      </Fields>
+    </DataSet>
+    <DataSet Name="ListSensorName">
+      <Query>
+        <DataSourceName>DataSource1</DataSourceName>
+        <CommandText>select CONVERT(char(6),SensorName) as SensorName from SensorInfo
+where SensorName like '%機櫃%風'
+union
+select ' '</CommandText>
+      </Query>
+      <Fields>
+        <Field Name="SensorName">
+          <DataField>SensorName</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+      </Fields>
+    </DataSet>
+    <DataSet Name="數據採集">
+      <Query>
+        <DataSourceName>DataSource1</DataSourceName>
+        <QueryParameters>
+          <QueryParameter Name="@月份">
+            <Value>=Parameters!月份.Value</Value>
+          </QueryParameter>
+          <QueryParameter Name="@廠區">
+            <Value>=Parameters!廠區.Value</Value>
+          </QueryParameter>
+          <QueryParameter Name="@年份">
+            <Value>=Parameters!年份.Value</Value>
+          </QueryParameter>
+          <QueryParameter Name="@樓棟">
+            <Value>=Parameters!樓棟.Value</Value>
+          </QueryParameter>
+          <QueryParameter Name="@機房">
+            <Value>=Parameters!機房.Value</Value>
+          </QueryParameter>
+        </QueryParameters>
+        <CommandText>execute Proc_DataCount
+@廠區 , @樓棟 ,@機房 ,@月份 ,@年份 </CommandText>
+      </Query>
+      <Fields>
+        <Field Name="Date">
+          <DataField>Date</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="CreateDate">
+          <DataField>CreateDate</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="Count">
+          <DataField>Count</DataField>
+          <rd:TypeName>System.Int32</rd:TypeName>
+        </Field>
+        <Field Name="LastMonthCount">
+          <DataField>LastMonthCount</DataField>
+          <rd:TypeName>System.Int32</rd:TypeName>
+        </Field>
+        <Field Name="DiffCount">
+          <DataField>DiffCount</DataField>
+          <rd:TypeName>System.Int32</rd:TypeName>
+        </Field>
+        <Field Name="ShouldCount">
+          <DataField>ShouldCount</DataField>
+          <rd:TypeName>System.Int32</rd:TypeName>
+        </Field>
+        <Field Name="LastMonth">
+          <DataField>LastMonth</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="ThisMonthDay">
+          <DataField>ThisMonthDay</DataField>
+          <rd:TypeName>System.Int32</rd:TypeName>
+        </Field>
+        <Field Name="Rate">
+          <DataField>Rate</DataField>
+          <rd:TypeName>System.Decimal</rd:TypeName>
+        </Field>
+      </Fields>
+    </DataSet>
+  </DataSets>
+  <ReportSections>
+    <ReportSection>
+      <Body>
+        <ReportItems>
+          <Textbox Name="Textbox7">
+            <CanGrow>true</CanGrow>
+            <KeepTogether>true</KeepTogether>
+            <Paragraphs>
+              <Paragraph>
+                <TextRuns>
+                  <TextRun>
+                    <Value>單位：筆</Value>
+                    <Style />
+                  </TextRun>
+                </TextRuns>
+                <Style />
+              </Paragraph>
+            </Paragraphs>
+            <rd:DefaultName>Textbox7</rd:DefaultName>
+            <Top>133.84741mm</Top>
+            <Left>0.8mm</Left>
+            <Height>6.08542mm</Height>
+            <Width>22.48958mm</Width>
+            <Style>
+              <Border>
+                <Style>None</Style>
+              </Border>
+              <PaddingLeft>2pt</PaddingLeft>
+              <PaddingRight>2pt</PaddingRight>
+              <PaddingTop>2pt</PaddingTop>
+              <PaddingBottom>2pt</PaddingBottom>
+            </Style>
+          </Textbox>
+          <Tablix Name="Tablix4">
+            <TablixCorner>
+              <TablixCornerRows>
+                <TablixCornerRow>
+                  <TablixCornerCell>
+                    <CellContents>
+                      <Image Name="Image1">
+                        <Source>Embedded</Source>
+                        <Value>報表表頭</Value>
+                        <Sizing>FitProportional</Sizing>
+                        <Style>
+                          <Border>
+                            <Style>None</Style>
+                          </Border>
+                        </Style>
+                      </Image>
+                    </CellContents>
+                  </TablixCornerCell>
+                </TablixCornerRow>
+              </TablixCornerRows>
+            </TablixCorner>
+            <TablixBody>
+              <TablixColumns>
+                <TablixColumn>
+                  <Width>2.5cm</Width>
+                </TablixColumn>
+              </TablixColumns>
+              <TablixRows>
+                <TablixRow>
+                  <Height>0.6cm</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Count">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=IIf(Sum(Fields!Count.Value) is nothing,0,Sum(Fields!Count.Value))</Value>
+                                  <Style />
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Count</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>Solid</Style>
+                            </Border>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+                <TablixRow>
+                  <Height>0.6cm</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="ShouldCount">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Sum(Fields!ShouldCount.Value)</Value>
+                                  <Style />
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>ShouldCount</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>Solid</Style>
+                            </Border>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+                <TablixRow>
+                  <Height>0.6cm</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="DiffCount">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!ShouldCount.Value-IIf(Sum(Fields!Count.Value) is nothing,0,Sum(Fields!Count.Value))</Value>
+                                  <Style />
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>DiffCount</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>Solid</Style>
+                            </Border>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+                <TablixRow>
+                  <Height>0.6cm</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Date">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=IIf(IIf(Sum(Fields!Count.Value) is nothing,0,Sum(Fields!Count.Value))/Fields!ShouldCount.Value&gt;1,1,IIf(Sum(Fields!Count.Value) is nothing,0,Sum(Fields!Count.Value))/Fields!ShouldCount.Value)</Value>
+                                  <Style>
+                                    <Format>0.00%</Format>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Date</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>Solid</Style>
+                            </Border>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+                <TablixRow>
+                  <Height>0.6cm</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="LastMonthCount">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=IIf(Sum(Fields!LastMonthCount.Value) is nothing ,0,Sum(Fields!LastMonthCount.Value))</Value>
+                                  <Style />
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>LastMonthCount</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>Solid</Style>
+                            </Border>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+                <TablixRow>
+                  <Height>0.6cm</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Rate">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=IIf(IIf(Sum(Fields!Rate.Value) is nothing ,0,Sum(Fields!Rate.Value))&gt;1,1,IIf(Sum(Fields!Rate.Value) is nothing ,0,Sum(Fields!Rate.Value)))</Value>
+                                  <Style>
+                                    <Format>0.00%</Format>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Rate</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>Solid</Style>
+                            </Border>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+              </TablixRows>
+            </TablixBody>
+            <TablixColumnHierarchy>
+              <TablixMembers>
+                <TablixMember>
+                  <Group Name="ThisMonthDay">
+                    <GroupExpressions>
+                      <GroupExpression>=Fields!ThisMonthDay.Value</GroupExpression>
+                    </GroupExpressions>
+                  </Group>
+                  <SortExpressions>
+                    <SortExpression>
+                      <Value>=Fields!ThisMonthDay.Value</Value>
+                    </SortExpression>
+                  </SortExpressions>
+                  <TablixHeader>
+                    <Size>1.18208cm</Size>
+                    <CellContents>
+                      <Textbox Name="ThisMonthDay">
+                        <CanGrow>true</CanGrow>
+                        <KeepTogether>true</KeepTogether>
+                        <Paragraphs>
+                          <Paragraph>
+                            <TextRuns>
+                              <TextRun>
+                                <Value>=Fields!ThisMonthDay.Value</Value>
+                                <Style />
+                              </TextRun>
+                            </TextRuns>
+                            <Style>
+                              <TextAlign>Center</TextAlign>
+                            </Style>
+                          </Paragraph>
+                        </Paragraphs>
+                        <rd:DefaultName>ThisMonthDay</rd:DefaultName>
+                        <Style>
+                          <Border>
+                            <Color>LightGrey</Color>
+                            <Style>Solid</Style>
+                          </Border>
+                          <BackgroundColor>#9eb6e4</BackgroundColor>
+                          <VerticalAlign>Middle</VerticalAlign>
+                          <PaddingLeft>2pt</PaddingLeft>
+                          <PaddingRight>2pt</PaddingRight>
+                          <PaddingTop>2pt</PaddingTop>
+                          <PaddingBottom>2pt</PaddingBottom>
+                        </Style>
+                      </Textbox>
+                    </CellContents>
+                  </TablixHeader>
+                </TablixMember>
+              </TablixMembers>
+            </TablixColumnHierarchy>
+            <TablixRowHierarchy>
+              <TablixMembers>
+                <TablixMember>
+                  <Group Name="RowGroup">
+                    <GroupExpressions>
+                      <GroupExpression />
+                    </GroupExpressions>
+                  </Group>
+                  <TablixHeader>
+                    <Size>2.92333cm</Size>
+                    <CellContents>
+                      <Textbox Name="Textbox10">
+                        <CanGrow>true</CanGrow>
+                        <KeepTogether>true</KeepTogether>
+                        <Paragraphs>
+                          <Paragraph>
+                            <TextRuns>
+                              <TextRun>
+                                <Value>實際數量</Value>
+                                <Style>
+                                  <FontWeight>Bold</FontWeight>
+                                </Style>
+                              </TextRun>
+                            </TextRuns>
+                            <Style>
+                              <TextAlign>Center</TextAlign>
+                            </Style>
+                          </Paragraph>
+                        </Paragraphs>
+                        <rd:DefaultName>Textbox10</rd:DefaultName>
+                        <Style>
+                          <Border>
+                            <Color>LightGrey</Color>
+                            <Style>Solid</Style>
+                          </Border>
+                          <BackgroundColor>#9eb6e4</BackgroundColor>
+                          <VerticalAlign>Middle</VerticalAlign>
+                          <PaddingLeft>2pt</PaddingLeft>
+                          <PaddingRight>2pt</PaddingRight>
+                          <PaddingTop>2pt</PaddingTop>
+                          <PaddingBottom>2pt</PaddingBottom>
+                        </Style>
+                      </Textbox>
+                    </CellContents>
+                  </TablixHeader>
+                </TablixMember>
+                <TablixMember>
+                  <TablixHeader>
+                    <Size>2.92333cm</Size>
+                    <CellContents>
+                      <Textbox Name="Textbox16">
+                        <CanGrow>true</CanGrow>
+                        <KeepTogether>true</KeepTogether>
+                        <Paragraphs>
+                          <Paragraph>
+                            <TextRuns>
+                              <TextRun>
+                                <Value>預計數量</Value>
+                                <Style>
+                                  <FontWeight>Bold</FontWeight>
+                                </Style>
+                              </TextRun>
+                            </TextRuns>
+                            <Style>
+                              <TextAlign>Center</TextAlign>
+                            </Style>
+                          </Paragraph>
+                        </Paragraphs>
+                        <rd:DefaultName>Textbox16</rd:DefaultName>
+                        <Style>
+                          <Border>
+                            <Color>LightGrey</Color>
+                            <Style>Solid</Style>
+                          </Border>
+                          <BackgroundColor>#9eb6e4</BackgroundColor>
+                          <VerticalAlign>Middle</VerticalAlign>
+                          <PaddingLeft>2pt</PaddingLeft>
+                          <PaddingRight>2pt</PaddingRight>
+                          <PaddingTop>2pt</PaddingTop>
+                          <PaddingBottom>2pt</PaddingBottom>
+                        </Style>
+                      </Textbox>
+                    </CellContents>
+                  </TablixHeader>
+                  <KeepWithGroup>Before</KeepWithGroup>
+                </TablixMember>
+                <TablixMember>
+                  <TablixHeader>
+                    <Size>2.92333cm</Size>
+                    <CellContents>
+                      <Textbox Name="Textbox18">
+                        <CanGrow>true</CanGrow>
+                        <KeepTogether>true</KeepTogether>
+                        <Paragraphs>
+                          <Paragraph>
+                            <TextRuns>
+                              <TextRun>
+                                <Value>差值</Value>
+                                <Style>
+                                  <FontWeight>Bold</FontWeight>
+                                </Style>
+                              </TextRun>
+                            </TextRuns>
+                            <Style>
+                              <TextAlign>Center</TextAlign>
+                            </Style>
+                          </Paragraph>
+                        </Paragraphs>
+                        <rd:DefaultName>Textbox18</rd:DefaultName>
+                        <Style>
+                          <Border>
+                            <Color>LightGrey</Color>
+                            <Style>Solid</Style>
+                          </Border>
+                          <BackgroundColor>#9eb6e4</BackgroundColor>
+                          <VerticalAlign>Middle</VerticalAlign>
+                          <PaddingLeft>2pt</PaddingLeft>
+                          <PaddingRight>2pt</PaddingRight>
+                          <PaddingTop>2pt</PaddingTop>
+                          <PaddingBottom>2pt</PaddingBottom>
+                        </Style>
+                      </Textbox>
+                    </CellContents>
+                  </TablixHeader>
+                  <KeepWithGroup>Before</KeepWithGroup>
+                </TablixMember>
+                <TablixMember>
+                  <TablixHeader>
+                    <Size>2.92333cm</Size>
+                    <CellContents>
+                      <Textbox Name="Textbox1">
+                        <CanGrow>true</CanGrow>
+                        <KeepTogether>true</KeepTogether>
+                        <Paragraphs>
+                          <Paragraph>
+                            <TextRuns>
+                              <TextRun>
+                                <Value>數據收集完整度</Value>
+                                <Style>
+                                  <FontWeight>Bold</FontWeight>
+                                </Style>
+                              </TextRun>
+                            </TextRuns>
+                            <Style>
+                              <TextAlign>Center</TextAlign>
+                            </Style>
+                          </Paragraph>
+                        </Paragraphs>
+                        <rd:DefaultName>Textbox1</rd:DefaultName>
+                        <Style>
+                          <Border>
+                            <Color>LightGrey</Color>
+                            <Style>Solid</Style>
+                          </Border>
+                          <BackgroundColor>#9eb6e4</BackgroundColor>
+                          <VerticalAlign>Middle</VerticalAlign>
+                          <PaddingLeft>2pt</PaddingLeft>
+                          <PaddingRight>2pt</PaddingRight>
+                          <PaddingTop>2pt</PaddingTop>
+                          <PaddingBottom>2pt</PaddingBottom>
+                        </Style>
+                      </Textbox>
+                    </CellContents>
+                  </TablixHeader>
+                  <KeepWithGroup>Before</KeepWithGroup>
+                </TablixMember>
+                <TablixMember>
+                  <TablixHeader>
+                    <Size>2.92333cm</Size>
+                    <CellContents>
+                      <Textbox Name="LastMonth">
+                        <CanGrow>true</CanGrow>
+                        <KeepTogether>true</KeepTogether>
+                        <Paragraphs>
+                          <Paragraph>
+                            <TextRuns>
+                              <TextRun>
+                                <Value>=Fields!LastMonth.Value</Value>
+                                <Style>
+                                  <FontWeight>Bold</FontWeight>
+                                </Style>
+                              </TextRun>
+                            </TextRuns>
+                            <Style>
+                              <TextAlign>Center</TextAlign>
+                            </Style>
+                          </Paragraph>
+                        </Paragraphs>
+                        <rd:DefaultName>LastMonth</rd:DefaultName>
+                        <Style>
+                          <Border>
+                            <Color>LightGrey</Color>
+                            <Style>Solid</Style>
+                          </Border>
+                          <BackgroundColor>#9eb6e4</BackgroundColor>
+                          <VerticalAlign>Middle</VerticalAlign>
+                          <PaddingLeft>2pt</PaddingLeft>
+                          <PaddingRight>2pt</PaddingRight>
+                          <PaddingTop>2pt</PaddingTop>
+                          <PaddingBottom>2pt</PaddingBottom>
+                        </Style>
+                      </Textbox>
+                    </CellContents>
+                  </TablixHeader>
+                  <KeepWithGroup>Before</KeepWithGroup>
+                </TablixMember>
+                <TablixMember>
+                  <TablixHeader>
+                    <Size>2.92333cm</Size>
+                    <CellContents>
+                      <Textbox Name="Textbox22">
+                        <CanGrow>true</CanGrow>
+                        <KeepTogether>true</KeepTogether>
+                        <Paragraphs>
+                          <Paragraph>
+                            <TextRuns>
+                              <TextRun>
+                                <Value>月環比</Value>
+                                <Style>
+                                  <FontWeight>Bold</FontWeight>
+                                </Style>
+                              </TextRun>
+                            </TextRuns>
+                            <Style>
+                              <TextAlign>Center</TextAlign>
+                            </Style>
+                          </Paragraph>
+                        </Paragraphs>
+                        <rd:DefaultName>Textbox22</rd:DefaultName>
+                        <Style>
+                          <Border>
+                            <Color>LightGrey</Color>
+                            <Style>Solid</Style>
+                          </Border>
+                          <BackgroundColor>#9eb6e4</BackgroundColor>
+                          <VerticalAlign>Middle</VerticalAlign>
+                          <PaddingLeft>2pt</PaddingLeft>
+                          <PaddingRight>2pt</PaddingRight>
+                          <PaddingTop>2pt</PaddingTop>
+                          <PaddingBottom>2pt</PaddingBottom>
+                        </Style>
+                      </Textbox>
+                    </CellContents>
+                  </TablixHeader>
+                  <KeepWithGroup>Before</KeepWithGroup>
+                </TablixMember>
+              </TablixMembers>
+            </TablixRowHierarchy>
+            <DataSetName>數據採集</DataSetName>
+            <Top>14.09912cm</Top>
+            <Left>0.08cm</Left>
+            <Height>4.78208cm</Height>
+            <Width>5.42333cm</Width>
+            <ZIndex>1</ZIndex>
+            <Style>
+              <Border>
+                <Style>None</Style>
+              </Border>
+            </Style>
+          </Tablix>
+          <Chart Name="Chart1">
+            <ChartCategoryHierarchy>
+              <ChartMembers>
+                <ChartMember>
+                  <Group Name="Chart1_CategoryGroup">
+                    <GroupExpressions>
+                      <GroupExpression>=Fields!Date.Value</GroupExpression>
+                    </GroupExpressions>
+                  </Group>
+                  <SortExpressions>
+                    <SortExpression>
+                      <Value>=Fields!Date.Value</Value>
+                    </SortExpression>
+                  </SortExpressions>
+                  <Label>=Fields!Date.Value</Label>
+                </ChartMember>
+              </ChartMembers>
+            </ChartCategoryHierarchy>
+            <ChartSeriesHierarchy>
+              <ChartMembers>
+                <ChartMember>
+                  <Label>Should Count</Label>
+                </ChartMember>
+                <ChartMember>
+                  <Label>Count</Label>
+                </ChartMember>
+                <ChartMember>
+                  <Label>Last Month Count</Label>
+                </ChartMember>
+              </ChartMembers>
+            </ChartSeriesHierarchy>
+            <ChartData>
+              <ChartSeriesCollection>
+                <ChartSeries Name="ShouldCount">
+                  <ChartDataPoints>
+                    <ChartDataPoint>
+                      <ChartDataPointValues>
+                        <Y>=Sum(Fields!ShouldCount.Value)</Y>
+                      </ChartDataPointValues>
+                      <ChartDataLabel>
+                        <Style />
+                      </ChartDataLabel>
+                      <Style>
+                        <Border>
+                          <Width>2pt</Width>
+                        </Border>
+                      </Style>
+                      <ChartMarker>
+                        <Style />
+                      </ChartMarker>
+                      <DataElementOutput>Output</DataElementOutput>
+                    </ChartDataPoint>
+                  </ChartDataPoints>
+                  <Type>Line</Type>
+                  <Style />
+                  <ChartEmptyPoints>
+                    <Style />
+                    <ChartMarker>
+                      <Style />
+                    </ChartMarker>
+                    <ChartDataLabel>
+                      <Style />
+                    </ChartDataLabel>
+                  </ChartEmptyPoints>
+                  <ChartItemInLegend>
+                    <LegendText>應採集數據量</LegendText>
+                  </ChartItemInLegend>
+                  <ValueAxisName>Primary</ValueAxisName>
+                  <CategoryAxisName>Primary</CategoryAxisName>
+                  <ChartSmartLabel>
+                    <CalloutLineColor>Black</CalloutLineColor>
+                    <MinMovingDistance>0pt</MinMovingDistance>
+                  </ChartSmartLabel>
+                </ChartSeries>
+                <ChartSeries Name="Count">
+                  <ChartDataPoints>
+                    <ChartDataPoint>
+                      <ChartDataPointValues>
+                        <Y>=Sum(Fields!Count.Value)</Y>
+                      </ChartDataPointValues>
+                      <ChartDataLabel>
+                        <Style />
+                      </ChartDataLabel>
+                      <Style>
+                        <Border>
+                          <Width>2pt</Width>
+                        </Border>
+                      </Style>
+                      <ChartMarker>
+                        <Style />
+                      </ChartMarker>
+                      <DataElementOutput>Output</DataElementOutput>
+                    </ChartDataPoint>
+                  </ChartDataPoints>
+                  <Type>Line</Type>
+                  <Style />
+                  <ChartEmptyPoints>
+                    <Style />
+                    <ChartMarker>
+                      <Style />
+                    </ChartMarker>
+                    <ChartDataLabel>
+                      <Style />
+                    </ChartDataLabel>
+                  </ChartEmptyPoints>
+                  <ChartItemInLegend>
+                    <LegendText>當月數據採集</LegendText>
+                  </ChartItemInLegend>
+                  <ValueAxisName>Primary</ValueAxisName>
+                  <CategoryAxisName>Primary</CategoryAxisName>
+                  <ChartSmartLabel>
+                    <CalloutLineColor>Black</CalloutLineColor>
+                    <MinMovingDistance>0pt</MinMovingDistance>
+                  </ChartSmartLabel>
+                </ChartSeries>
+                <ChartSeries Name="LastMonthCount">
+                  <ChartDataPoints>
+                    <ChartDataPoint>
+                      <ChartDataPointValues>
+                        <Y>=Sum(Fields!LastMonthCount.Value)</Y>
+                      </ChartDataPointValues>
+                      <ChartDataLabel>
+                        <Style />
+                      </ChartDataLabel>
+                      <Style>
+                        <Border>
+                          <Width>2pt</Width>
+                        </Border>
+                      </Style>
+                      <ChartMarker>
+                        <Style />
+                      </ChartMarker>
+                      <DataElementOutput>Output</DataElementOutput>
+                    </ChartDataPoint>
+                  </ChartDataPoints>
+                  <Type>Line</Type>
+                  <Style />
+                  <ChartEmptyPoints>
+                    <Style />
+                    <ChartMarker>
+                      <Style />
+                    </ChartMarker>
+                    <ChartDataLabel>
+                      <Style />
+                    </ChartDataLabel>
+                  </ChartEmptyPoints>
+                  <ChartItemInLegend>
+                    <LegendText>上月數據採集</LegendText>
+                  </ChartItemInLegend>
+                  <ValueAxisName>Primary</ValueAxisName>
+                  <CategoryAxisName>Primary</CategoryAxisName>
+                  <ChartSmartLabel>
+                    <CalloutLineColor>Black</CalloutLineColor>
+                    <MinMovingDistance>0pt</MinMovingDistance>
+                  </ChartSmartLabel>
+                </ChartSeries>
+              </ChartSeriesCollection>
+            </ChartData>
+            <ChartAreas>
+              <ChartArea Name="Default">
+                <ChartCategoryAxes>
+                  <ChartAxis Name="Primary">
+                    <Style>
+                      <FontSize>8pt</FontSize>
+                    </Style>
+                    <ChartAxisTitle>
+                      <Caption>時間</Caption>
+                      <Style>
+                        <FontSize>8pt</FontSize>
+                      </Style>
+                    </ChartAxisTitle>
+                    <Interval>1</Interval>
+                    <ChartMajorGridLines>
+                      <Enabled>False</Enabled>
+                      <Style>
+                        <Border>
+                          <Color>Gainsboro</Color>
+                        </Border>
+                      </Style>
+                    </ChartMajorGridLines>
+                    <ChartMinorGridLines>
+                      <Style>
+                        <Border>
+                          <Color>Gainsboro</Color>
+                          <Style>Dotted</Style>
+                        </Border>
+                      </Style>
+                    </ChartMinorGridLines>
+                    <ChartMinorTickMarks>
+                      <Length>0.5</Length>
+                    </ChartMinorTickMarks>
+                    <CrossAt>NaN</CrossAt>
+                    <Minimum>NaN</Minimum>
+                    <Maximum>NaN</Maximum>
+                    <Angle>-45</Angle>
+                    <LabelsAutoFitDisabled>true</LabelsAutoFitDisabled>
+                    <ChartAxisScaleBreak>
+                      <Style />
+                    </ChartAxisScaleBreak>
+                  </ChartAxis>
+                  <ChartAxis Name="Secondary">
+                    <Style>
+                      <FontSize>8pt</FontSize>
+                    </Style>
+                    <ChartAxisTitle>
+                      <Caption>軸標題</Caption>
+                      <Style>
+                        <FontSize>8pt</FontSize>
+                      </Style>
+                    </ChartAxisTitle>
+                    <ChartMajorGridLines>
+                      <Enabled>False</Enabled>
+                      <Style>
+                        <Border>
+                          <Color>Gainsboro</Color>
+                        </Border>
+                      </Style>
+                    </ChartMajorGridLines>
+                    <ChartMinorGridLines>
+                      <Style>
+                        <Border>
+                          <Color>Gainsboro</Color>
+                          <Style>Dotted</Style>
+                        </Border>
+                      </Style>
+                    </ChartMinorGridLines>
+                    <ChartMinorTickMarks>
+                      <Length>0.5</Length>
+                    </ChartMinorTickMarks>
+                    <CrossAt>NaN</CrossAt>
+                    <Location>Opposite</Location>
+                    <Minimum>NaN</Minimum>
+                    <Maximum>NaN</Maximum>
+                    <ChartAxisScaleBreak>
+                      <Style />
+                    </ChartAxisScaleBreak>
+                  </ChartAxis>
+                </ChartCategoryAxes>
+                <ChartValueAxes>
+                  <ChartAxis Name="Primary">
+                    <Style>
+                      <FontSize>8pt</FontSize>
+                    </Style>
+                    <ChartAxisTitle>
+                      <Caption>筆數</Caption>
+                      <Style>
+                        <FontSize>8pt</FontSize>
+                      </Style>
+                    </ChartAxisTitle>
+                    <ChartMajorGridLines>
+                      <Style>
+                        <Border>
+                          <Color>Gainsboro</Color>
+                        </Border>
+                      </Style>
+                    </ChartMajorGridLines>
+                    <ChartMinorGridLines>
+                      <Style>
+                        <Border>
+                          <Color>Gainsboro</Color>
+                          <Style>Dotted</Style>
+                        </Border>
+                      </Style>
+                    </ChartMinorGridLines>
+                    <ChartMinorTickMarks>
+                      <Length>0.5</Length>
+                    </ChartMinorTickMarks>
+                    <CrossAt>NaN</CrossAt>
+                    <Minimum>NaN</Minimum>
+                    <Maximum>NaN</Maximum>
+                    <ChartAxisScaleBreak>
+                      <Style />
+                    </ChartAxisScaleBreak>
+                  </ChartAxis>
+                  <ChartAxis Name="Secondary">
+                    <Style>
+                      <FontSize>8pt</FontSize>
+                    </Style>
+                    <ChartAxisTitle>
+                      <Caption>軸標題</Caption>
+                      <Style>
+                        <FontSize>8pt</FontSize>
+                      </Style>
+                    </ChartAxisTitle>
+                    <ChartMajorGridLines>
+                      <Style>
+                        <Border>
+                          <Color>Gainsboro</Color>
+                        </Border>
+                      </Style>
+                    </ChartMajorGridLines>
+                    <ChartMinorGridLines>
+                      <Style>
+                        <Border>
+                          <Color>Gainsboro</Color>
+                          <Style>Dotted</Style>
+                        </Border>
+                      </Style>
+                    </ChartMinorGridLines>
+                    <ChartMinorTickMarks>
+                      <Length>0.5</Length>
+                    </ChartMinorTickMarks>
+                    <CrossAt>NaN</CrossAt>
+                    <Location>Opposite</Location>
+                    <Minimum>NaN</Minimum>
+                    <Maximum>NaN</Maximum>
+                    <ChartAxisScaleBreak>
+                      <Style />
+                    </ChartAxisScaleBreak>
+                  </ChartAxis>
+                </ChartValueAxes>
+                <Style>
+                  <BackgroundGradientType>None</BackgroundGradientType>
+                </Style>
+              </ChartArea>
+            </ChartAreas>
+            <ChartLegends>
+              <ChartLegend Name="Default">
+                <Style>
+                  <BackgroundGradientType>None</BackgroundGradientType>
+                  <FontSize>8pt</FontSize>
+                </Style>
+                <ChartLegendTitle>
+                  <Caption />
+                  <Style>
+                    <FontSize>8pt</FontSize>
+                    <FontWeight>Bold</FontWeight>
+                    <TextAlign>Center</TextAlign>
+                  </Style>
+                </ChartLegendTitle>
+                <HeaderSeparatorColor>Black</HeaderSeparatorColor>
+                <ColumnSeparatorColor>Black</ColumnSeparatorColor>
+              </ChartLegend>
+            </ChartLegends>
+            <ChartTitles>
+              <ChartTitle Name="Default">
+                <Caption>數據採集量分析
+</Caption>
+                <Style>
+                  <BackgroundGradientType>None</BackgroundGradientType>
+                  <FontWeight>Bold</FontWeight>
+                  <TextAlign>General</TextAlign>
+                  <VerticalAlign>Top</VerticalAlign>
+                </Style>
+              </ChartTitle>
+            </ChartTitles>
+            <Palette>BrightPastel</Palette>
+            <ChartBorderSkin>
+              <Style>
+                <BackgroundColor>Gray</BackgroundColor>
+                <BackgroundGradientType>None</BackgroundGradientType>
+                <Color>White</Color>
+              </Style>
+            </ChartBorderSkin>
+            <ChartNoDataMessage Name="NoDataMessage">
+              <Caption>沒有可用資料</Caption>
+              <Style>
+                <BackgroundGradientType>None</BackgroundGradientType>
+                <TextAlign>General</TextAlign>
+                <VerticalAlign>Top</VerticalAlign>
+              </Style>
+            </ChartNoDataMessage>
+            <DataSetName>數據採集</DataSetName>
+            <Height>13.27891cm</Height>
+            <Width>31cm</Width>
+            <ZIndex>2</ZIndex>
+            <Style>
+              <Border>
+                <Color>LightGrey</Color>
+                <Style>Solid</Style>
+              </Border>
+              <BackgroundColor>White</BackgroundColor>
+              <BackgroundGradientType>None</BackgroundGradientType>
+            </Style>
+          </Chart>
+        </ReportItems>
+        <Height>209.57589mm</Height>
+        <Style>
+          <Border>
+            <Style>None</Style>
+          </Border>
+        </Style>
+      </Body>
+      <Width>363.6287mm</Width>
+      <Page>
+        <PageFooter>
+          <Height>11.43mm</Height>
+          <PrintOnFirstPage>true</PrintOnFirstPage>
+          <PrintOnLastPage>true</PrintOnLastPage>
+          <ReportItems>
+            <Textbox Name="ExecutionTime">
+              <CanGrow>true</CanGrow>
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>=Globals!ExecutionTime</Value>
+                      <Style />
+                    </TextRun>
+                  </TextRuns>
+                  <Style>
+                    <TextAlign>Left</TextAlign>
+                  </Style>
+                </Paragraph>
+              </Paragraphs>
+              <rd:DefaultName>ExecutionTime</rd:DefaultName>
+              <Top>0mm</Top>
+              <Left>0mm</Left>
+              <Height>6.35mm</Height>
+              <Width>50.8mm</Width>
+              <Style>
+                <Border>
+                  <Style>None</Style>
+                </Border>
+                <PaddingLeft>2pt</PaddingLeft>
+                <PaddingRight>2pt</PaddingRight>
+                <PaddingTop>2pt</PaddingTop>
+                <PaddingBottom>2pt</PaddingBottom>
+              </Style>
+            </Textbox>
+          </ReportItems>
+          <Style>
+            <Border>
+              <Style>None</Style>
+            </Border>
+          </Style>
+        </PageFooter>
+        <PageHeight>43.18cm</PageHeight>
+        <PageWidth>27.94cm</PageWidth>
+        <LeftMargin>2cm</LeftMargin>
+        <RightMargin>2cm</RightMargin>
+        <TopMargin>2cm</TopMargin>
+        <BottomMargin>2cm</BottomMargin>
+        <ColumnSpacing>0.13cm</ColumnSpacing>
+        <Style />
+      </Page>
+    </ReportSection>
+  </ReportSections>
+  <ReportParameters>
+    <ReportParameter Name="廠區">
+      <DataType>String</DataType>
+      <DefaultValue>
+        <Values>
+          <Value>龍華</Value>
+        </Values>
+      </DefaultValue>
+      <Prompt>廠區</Prompt>
+      <ValidValues>
+        <DataSetReference>
+          <DataSetName>工廠下拉</DataSetName>
+          <ValueField>Plant</ValueField>
+          <LabelField>Plant</LabelField>
+        </DataSetReference>
+      </ValidValues>
+    </ReportParameter>
+    <ReportParameter Name="樓棟">
+      <DataType>String</DataType>
+      <DefaultValue>
+        <Values>
+          <Value>C8棟1樓</Value>
+        </Values>
+      </DefaultValue>
+      <Prompt>樓棟</Prompt>
+      <ValidValues>
+        <DataSetReference>
+          <DataSetName>樓棟</DataSetName>
+          <ValueField>Building</ValueField>
+          <LabelField>Building</LabelField>
+        </DataSetReference>
+      </ValidValues>
+    </ReportParameter>
+    <ReportParameter Name="機房">
+      <DataType>String</DataType>
+      <DefaultValue>
+        <Values>
+          <Value>A</Value>
+        </Values>
+      </DefaultValue>
+      <Prompt>機房</Prompt>
+      <ValidValues>
+        <DataSetReference>
+          <DataSetName>機房</DataSetName>
+          <ValueField>ComputerRoom</ValueField>
+          <LabelField>ComputerRoom</LabelField>
+        </DataSetReference>
+      </ValidValues>
+    </ReportParameter>
+    <ReportParameter Name="月份">
+      <DataType>String</DataType>
+      <DefaultValue>
+        <DataSetReference>
+          <DataSetName>DefaultMonth</DataSetName>
+          <ValueField>Month</ValueField>
+        </DataSetReference>
+      </DefaultValue>
+      <AllowBlank>true</AllowBlank>
+      <Prompt>月份</Prompt>
+      <ValidValues>
+        <ParameterValues>
+          <ParameterValue>
+            <Value>1</Value>
+            <Label>1月</Label>
+          </ParameterValue>
+          <ParameterValue>
+            <Value>2</Value>
+            <Label>2月</Label>
+          </ParameterValue>
+          <ParameterValue>
+            <Value>3</Value>
+            <Label>3月</Label>
+          </ParameterValue>
+          <ParameterValue>
+            <Value>4</Value>
+            <Label>4月</Label>
+          </ParameterValue>
+          <ParameterValue>
+            <Value>5</Value>
+            <Label>5月</Label>
+          </ParameterValue>
+          <ParameterValue>
+            <Value>6</Value>
+            <Label>6月</Label>
+          </ParameterValue>
+          <ParameterValue>
+            <Value>7</Value>
+            <Label>7月</Label>
+          </ParameterValue>
+          <ParameterValue>
+            <Value>8</Value>
+            <Label>8月</Label>
+          </ParameterValue>
+          <ParameterValue>
+            <Value>9</Value>
+            <Label>9月</Label>
+          </ParameterValue>
+          <ParameterValue>
+            <Value>10</Value>
+            <Label>10月</Label>
+          </ParameterValue>
+          <ParameterValue>
+            <Value>11</Value>
+            <Label>11月</Label>
+          </ParameterValue>
+          <ParameterValue>
+            <Value>12</Value>
+            <Label>12月</Label>
+          </ParameterValue>
+          <ParameterValue>
+            <Value>0</Value>
+            <Label>ALL</Label>
+          </ParameterValue>
+        </ParameterValues>
+      </ValidValues>
+    </ReportParameter>
+    <ReportParameter Name="機櫃">
+      <DataType>String</DataType>
+      <DefaultValue>
+        <DataSetReference>
+          <DataSetName>ListSensorName</DataSetName>
+          <ValueField>SensorName</ValueField>
+        </DataSetReference>
+      </DefaultValue>
+      <Prompt>機櫃</Prompt>
+      <Hidden>true</Hidden>
+      <ValidValues>
+        <DataSetReference>
+          <DataSetName>ListSensorName</DataSetName>
+          <ValueField>SensorName</ValueField>
+          <LabelField>SensorName</LabelField>
+        </DataSetReference>
+      </ValidValues>
+    </ReportParameter>
+    <ReportParameter Name="年份">
+      <DataType>String</DataType>
+      <DefaultValue>
+        <Values>
+          <Value>=Year(Globals!ExecutionTime)</Value>
+        </Values>
+      </DefaultValue>
+      <Prompt>年份</Prompt>
+    </ReportParameter>
+  </ReportParameters>
+  <EmbeddedImages>
+    <EmbeddedImage Name="未命名">
+      <MIMEType>image/png</MIMEType>
+      <ImageData>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</ImageData>
+    </EmbeddedImage>
+    <EmbeddedImage Name="未命名1">
+      <MIMEType>image/png</MIMEType>
+      <ImageData>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</ImageData>
+    </EmbeddedImage>
+    <EmbeddedImage Name="報表表頭">
+      <MIMEType>image/png</MIMEType>
+      <ImageData>iVBORw0KGgoAAAANSUhEUgAAAG4AAAAtCAIAAADA9cluAAAABmJLR0QAAAAAAAD5Q7t/AAAACXBIWXMAAA7EAAAOxAGVKw4bAAACJ0lEQVR4nO2XW27EIAxF+R9V6v4/WEY30i10IZU6EnVssI0xjhMlOqoYhodzdJk0pX79PLhQxBF5KCV1tamLo5S/Sxx2CknL4slpM2NNGgJsvj4+aaNBx28vaB+Lhx16oY66/VTuoR5xy+SYbXZ1wM5uKpm5xjpSYbOpUclElc61FJEQw2HXqBQbkLntkzNlk/4aorh1U4kah93FLa+F3qYtlfc/4BDlYedVdtOaPZWoLFS0GdGmmErm29QqaQp22+zuCDdF4rpfHbZjNguA1rRuEMIcdj6V3bPS2tlV+kYSIh52FyL2GDE6UJWEYp0Am9s34IlJ5Rvlk91MCdiDISyVjX13+r9uOV7iTBciU9nYdHfDRWO0xqfyzY77Ui23L7CnpLLhey+WtRzNvsb/n1/OpsNCjmZPwatmn1UOK17QrEupq/NFLqR1scKlybPkD+xKVfaZ6+Q0ay7GMmcTqcwaCpieEMbpZmc3nRt9IqdondpOOy4VwYFVbiEMEl/smPeTmNeVGmJWs+xwRHulq0QoHUan0JFhbDIrrsapRHEbpRJOqQlUIny1MovIB5yx1u3MphLiEtjRRG45mMf2kaaShrd9xSyeAbPZ7njVbyXs4dv1UioRs2bRGPmAw780lai/XlklQmMW9msfO1Qfbd9MJWKktfWoUtnaVOvIL/14J2hgh7l9g1LG9NA2/XhjOlmFaAzCbHbzKxZxJ+Tn1IOS8v1cTtcvofVyyIL07/0AAAAASUVORK5CYII=</ImageData>
+    </EmbeddedImage>
+  </EmbeddedImages>
+  <rd:ReportUnitType>Cm</rd:ReportUnitType>
+  <rd:ReportServerUrl>http://10.62.197.16/ReportServer</rd:ReportServerUrl>
+  <rd:ReportID>f641c6b1-9f7c-44c6-aa85-4c2dba3cedb8</rd:ReportID>
+</Report>

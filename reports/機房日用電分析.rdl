@@ -1,0 +1,1538 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Report xmlns:rd="http://schemas.microsoft.com/SQLServer/reporting/reportdesigner" xmlns:cl="http://schemas.microsoft.com/sqlserver/reporting/2010/01/componentdefinition" xmlns="http://schemas.microsoft.com/sqlserver/reporting/2010/01/reportdefinition">
+  <AutoRefresh>0</AutoRefresh>
+  <DataSources>
+    <DataSource Name="DataSource1">
+      <DataSourceReference>/PDSS Reports/教學報表/DCMP/DCMP91</DataSourceReference>
+      <rd:SecurityType>DataBase</rd:SecurityType>
+      <rd:DataSourceID>90f5b1c5-9c93-42e5-b298-755d0dfc2fcb</rd:DataSourceID>
+    </DataSource>
+  </DataSources>
+  <DataSets>
+    <DataSet Name="工廠下拉">
+      <Query>
+        <DataSourceName>DataSource1</DataSourceName>
+        <CommandText>select distinct Plant from PlantInfo</CommandText>
+      </Query>
+      <Fields>
+        <Field Name="Plant">
+          <DataField>Plant</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+      </Fields>
+    </DataSet>
+    <DataSet Name="樓棟">
+      <Query>
+        <DataSourceName>DataSource1</DataSourceName>
+        <QueryParameters>
+          <QueryParameter Name="@廠區">
+            <Value>=Parameters!廠區.Value</Value>
+          </QueryParameter>
+        </QueryParameters>
+        <CommandText>select distinct Building from PlantInfo
+where Plant = @廠區</CommandText>
+      </Query>
+      <Fields>
+        <Field Name="Building">
+          <DataField>Building</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+      </Fields>
+    </DataSet>
+    <DataSet Name="機房">
+      <Query>
+        <DataSourceName>DataSource1</DataSourceName>
+        <QueryParameters>
+          <QueryParameter Name="@廠區">
+            <Value>=Parameters!廠區.Value</Value>
+          </QueryParameter>
+          <QueryParameter Name="@樓棟">
+            <Value>=Parameters!樓棟.Value</Value>
+          </QueryParameter>
+        </QueryParameters>
+        <CommandText>select distinct ComputerRoom from PlantInfo
+where Plant = @廠區
+and Building = @樓棟</CommandText>
+      </Query>
+      <Fields>
+        <Field Name="ComputerRoom">
+          <DataField>ComputerRoom</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+      </Fields>
+    </DataSet>
+    <DataSet Name="機房日用電分析">
+      <Query>
+        <DataSourceName>DataSource1</DataSourceName>
+        <QueryParameters>
+          <QueryParameter Name="@廠區">
+            <Value>=Parameters!廠區.Value</Value>
+          </QueryParameter>
+          <QueryParameter Name="@樓棟">
+            <Value>=Parameters!樓棟.Value</Value>
+          </QueryParameter>
+          <QueryParameter Name="@機房">
+            <Value>=Parameters!機房.Value</Value>
+          </QueryParameter>
+          <QueryParameter Name="@月份">
+            <Value>=Parameters!月份.Value</Value>
+          </QueryParameter>
+          <QueryParameter Name="@年份">
+            <Value>=Parameters!年份.Value</Value>
+          </QueryParameter>
+        </QueryParameters>
+        <CommandText>exec Proc_dailyEnergyUsing 
+@廠區 
+, @樓棟
+,@機房
+
+,@月份
+
+,@年份 </CommandText>
+      </Query>
+      <Fields>
+        <Field Name="日期">
+          <DataField>日期</DataField>
+          <rd:TypeName>System.Int32</rd:TypeName>
+        </Field>
+        <Field Name="完整日期">
+          <DataField>完整日期</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="修正后電能值1">
+          <DataField>修正后電能值1</DataField>
+          <rd:TypeName>System.Double</rd:TypeName>
+        </Field>
+        <Field Name="修正后電能值">
+          <DataField>修正后電能值</DataField>
+          <rd:TypeName>System.Double</rd:TypeName>
+        </Field>
+        <Field Name="上月修正后電能值">
+          <DataField>上月修正后電能值</DataField>
+          <rd:TypeName>System.Double</rd:TypeName>
+        </Field>
+        <Field Name="上月月份">
+          <DataField>上月月份</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="去年月份">
+          <DataField>去年月份</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="去年用電量">
+          <DataField>去年用電量</DataField>
+          <rd:TypeName>System.Double</rd:TypeName>
+        </Field>
+        <Field Name="上月月份備用">
+          <DataField>上月月份備用</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="去年月份備用">
+          <DataField>去年月份備用</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+      </Fields>
+    </DataSet>
+    <DataSet Name="DefaultMonth">
+      <Query>
+        <DataSourceName>DataSource1</DataSourceName>
+        <CommandText>select datepart(MM,getdate()) as Month</CommandText>
+      </Query>
+      <Fields>
+        <Field Name="Month">
+          <DataField>Month</DataField>
+          <rd:TypeName>System.Int32</rd:TypeName>
+        </Field>
+      </Fields>
+    </DataSet>
+  </DataSets>
+  <ReportSections>
+    <ReportSection>
+      <Body>
+        <ReportItems>
+          <Tablix Name="Tablix1">
+            <TablixBody>
+              <TablixColumns>
+                <TablixColumn>
+                  <Width>24.73542mm</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>32.14375mm</Width>
+                </TablixColumn>
+              </TablixColumns>
+              <TablixRows>
+                <TablixRow>
+                  <Height>12.3384mm</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox4">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>本月</Value>
+                                  <Style>
+                                    <FontFamily>Tahoma</FontFamily>
+                                    <Color>#4d4d4d</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox4</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>#e5e5e5</Color>
+                              <Style>Solid</Style>
+                            </Border>
+                            <BackgroundColor>LightSteelBlue</BackgroundColor>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="修正后電能值">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Sum(Fields!修正后電能值.Value)</Value>
+                                  <Style>
+                                    <FontFamily>Tahoma</FontFamily>
+                                    <Format>f2</Format>
+                                    <Color>#4d4d4d</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>修正后電能值</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>#e5e5e5</Color>
+                              <Style>Solid</Style>
+                            </Border>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+                <TablixRow>
+                  <Height>6mm</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox10">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>用電限額</Value>
+                                  <Style>
+                                    <FontFamily>Tahoma</FontFamily>
+                                    <Color>#4d4d4d</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox10</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>#e5e5e5</Color>
+                              <Style>Solid</Style>
+                            </Border>
+                            <BackgroundColor>LightSteelBlue</BackgroundColor>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox11">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>450.00</Value>
+                                  <Style>
+                                    <FontFamily>Tahoma</FontFamily>
+                                    <Format>f2</Format>
+                                    <Color>#4d4d4d</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox11</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>#e5e5e5</Color>
+                              <Style>Solid</Style>
+                            </Border>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+                <TablixRow>
+                  <Height>6mm</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox8">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>差值</Value>
+                                  <Style>
+                                    <FontFamily>Tahoma</FontFamily>
+                                    <Color>#4d4d4d</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox8</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>#e5e5e5</Color>
+                              <Style>Solid</Style>
+                            </Border>
+                            <BackgroundColor>LightSteelBlue</BackgroundColor>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox9">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=450-Sum(Fields!修正后電能值.Value)</Value>
+                                  <Style>
+                                    <FontFamily>Tahoma</FontFamily>
+                                    <Format>f2</Format>
+                                    <Color>=IIf(Sum(Fields!修正后電能值.Value)-450&gt;0, "red","black")</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox9</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>#e5e5e5</Color>
+                              <Style>Solid</Style>
+                            </Border>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+                <TablixRow>
+                  <Height>6mm</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="上月月份備用">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!上月月份備用.Value</Value>
+                                  <Style>
+                                    <FontFamily>Tahoma</FontFamily>
+                                    <Color>#4d4d4d</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>上月月份備用</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>#e5e5e5</Color>
+                              <Style>Solid</Style>
+                            </Border>
+                            <BackgroundColor>LightSteelBlue</BackgroundColor>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="上月修正后電能值">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=IIf(Sum(Fields!上月修正后電能值.Value) =0, "無數據源",Sum(Fields!上月修正后電能值.Value))</Value>
+                                  <Style>
+                                    <FontFamily>Tahoma</FontFamily>
+                                    <Format>f2</Format>
+                                    <Color>#4d4d4d</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>上月修正后電能值</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>#e5e5e5</Color>
+                              <Style>Solid</Style>
+                            </Border>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+                <TablixRow>
+                  <Height>6mm</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox12">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>月同比</Value>
+                                  <Style>
+                                    <FontFamily>Tahoma</FontFamily>
+                                    <Color>#4d4d4d</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox12</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>#e5e5e5</Color>
+                              <Style>Solid</Style>
+                            </Border>
+                            <BackgroundColor>LightSteelBlue</BackgroundColor>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox13">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=IIf(Sum(Fields!上月修正后電能值.Value) =0, "無數據源",(Sum(Fields!修正后電能值.Value)-(Sum(Fields!上月修正后電能值.Value)))/Sum(Fields!上月修正后電能值.Value))</Value>
+                                  <Style>
+                                    <FontFamily>Tahoma</FontFamily>
+                                    <Format>f2</Format>
+                                    <Color>=IIf(IIf(Sum(Fields!上月修正后電能值.Value) =0, "無數據源",(Sum(Fields!修正后電能值.Value)-(Sum(Fields!上月修正后電能值.Value)))/Sum(Fields!上月修正后電能值.Value))&gt;0,"red", "black")</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox13</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>#e5e5e5</Color>
+                              <Style>Solid</Style>
+                            </Border>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+                <TablixRow>
+                  <Height>6mm</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="去年月份備用">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!去年月份備用.Value</Value>
+                                  <Style>
+                                    <FontFamily>Tahoma</FontFamily>
+                                    <Color>#4d4d4d</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>去年月份備用</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>#e5e5e5</Color>
+                              <Style>Solid</Style>
+                            </Border>
+                            <BackgroundColor>LightSteelBlue</BackgroundColor>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox80">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=IIf(Sum(Fields!去年用電量.Value) =0, "無數據源",Sum(Fields!去年用電量.Value))</Value>
+                                  <Style>
+                                    <FontFamily>Tahoma</FontFamily>
+                                    <Format>f2</Format>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox80</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>#e5e5e5</Color>
+                              <Style>Solid</Style>
+                            </Border>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+                <TablixRow>
+                  <Height>6mm</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox81">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>年同比</Value>
+                                  <Style>
+                                    <FontFamily>Tahoma</FontFamily>
+                                    <Color>#4d4d4d</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox81</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>#e5e5e5</Color>
+                              <Style>Solid</Style>
+                            </Border>
+                            <BackgroundColor>LightSteelBlue</BackgroundColor>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox82">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=IIf(Sum(Fields!去年用電量.Value) =0, "無數據源",(Sum(Fields!修正后電能值.Value)-(Sum(Fields!去年用電量.Value)))/Sum(Fields!去年用電量.Value))</Value>
+                                  <Style>
+                                    <FontFamily>Tahoma</FontFamily>
+                                    <Format>f2</Format>
+                                    <Color>=IIf(IIf(Sum(Fields!去年用電量.Value) =0, "無數據源",(Sum(Fields!修正后電能值.Value)-(Sum(Fields!去年用電量.Value)))/Sum(Fields!去年用電量.Value))&gt;0,"red", "black")</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox82</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>#e5e5e5</Color>
+                              <Style>Solid</Style>
+                            </Border>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+              </TablixRows>
+            </TablixBody>
+            <TablixColumnHierarchy>
+              <TablixMembers>
+                <TablixMember>
+                  <TablixHeader>
+                    <Size>12.3384mm</Size>
+                    <CellContents>
+                      <Image Name="Image1">
+                        <Source>Embedded</Source>
+                        <Value>用於機房日用電分析報表2</Value>
+                        <Sizing>FitProportional</Sizing>
+                        <Style>
+                          <Border>
+                            <Style>None</Style>
+                          </Border>
+                        </Style>
+                      </Image>
+                    </CellContents>
+                  </TablixHeader>
+                </TablixMember>
+                <TablixMember>
+                  <Group Name="日期">
+                    <GroupExpressions>
+                      <GroupExpression>=Fields!日期.Value</GroupExpression>
+                    </GroupExpressions>
+                  </Group>
+                  <SortExpressions>
+                    <SortExpression>
+                      <Value>=Fields!日期.Value</Value>
+                    </SortExpression>
+                  </SortExpressions>
+                  <TablixHeader>
+                    <Size>12.3384mm</Size>
+                    <CellContents>
+                      <Textbox Name="日期">
+                        <CanGrow>true</CanGrow>
+                        <KeepTogether>true</KeepTogether>
+                        <Paragraphs>
+                          <Paragraph>
+                            <TextRuns>
+                              <TextRun>
+                                <Value>=Fields!日期.Value</Value>
+                                <Style>
+                                  <FontFamily>Tahoma</FontFamily>
+                                  <FontWeight>Bold</FontWeight>
+                                  <Color>#465678</Color>
+                                </Style>
+                              </TextRun>
+                            </TextRuns>
+                            <Style>
+                              <TextAlign>Center</TextAlign>
+                            </Style>
+                          </Paragraph>
+                        </Paragraphs>
+                        <rd:DefaultName>日期</rd:DefaultName>
+                        <Style>
+                          <Border>
+                            <Color>#c6daf8</Color>
+                            <Style>Solid</Style>
+                          </Border>
+                          <BackgroundColor>#9eb6e4</BackgroundColor>
+                          <VerticalAlign>Middle</VerticalAlign>
+                          <PaddingLeft>2pt</PaddingLeft>
+                          <PaddingRight>2pt</PaddingRight>
+                          <PaddingTop>2pt</PaddingTop>
+                          <PaddingBottom>2pt</PaddingBottom>
+                        </Style>
+                      </Textbox>
+                    </CellContents>
+                  </TablixHeader>
+                  <TablixMembers>
+                    <TablixMember />
+                  </TablixMembers>
+                </TablixMember>
+              </TablixMembers>
+            </TablixColumnHierarchy>
+            <TablixRowHierarchy>
+              <TablixMembers>
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+              </TablixMembers>
+            </TablixRowHierarchy>
+            <DataSetName>機房日用電分析</DataSetName>
+            <Top>78.68709mm</Top>
+            <Left>0mm</Left>
+            <Height>60.6768mm</Height>
+            <Width>56.87917mm</Width>
+            <Style>
+              <Border>
+                <Style>None</Style>
+              </Border>
+            </Style>
+          </Tablix>
+          <Textbox Name="Textbox7">
+            <CanGrow>true</CanGrow>
+            <KeepTogether>true</KeepTogether>
+            <Paragraphs>
+              <Paragraph>
+                <TextRuns>
+                  <TextRun>
+                    <Value>單位：kWh</Value>
+                    <Style />
+                  </TextRun>
+                </TextRuns>
+                <Style />
+              </Paragraph>
+            </Paragraphs>
+            <rd:DefaultName>Textbox7</rd:DefaultName>
+            <Top>71.19056mm</Top>
+            <Left>0mm</Left>
+            <Height>6.08542mm</Height>
+            <Width>22.48958mm</Width>
+            <ZIndex>1</ZIndex>
+            <Style>
+              <Border>
+                <Style>None</Style>
+              </Border>
+              <PaddingLeft>2pt</PaddingLeft>
+              <PaddingRight>2pt</PaddingRight>
+              <PaddingTop>2pt</PaddingTop>
+              <PaddingBottom>2pt</PaddingBottom>
+            </Style>
+          </Textbox>
+          <Chart Name="Chart1">
+            <ChartCategoryHierarchy>
+              <ChartMembers>
+                <ChartMember>
+                  <Group Name="Chart1_CategoryGroup">
+                    <GroupExpressions>
+                      <GroupExpression>=Fields!日期.Value</GroupExpression>
+                    </GroupExpressions>
+                  </Group>
+                  <SortExpressions>
+                    <SortExpression>
+                      <Value>=Fields!日期.Value</Value>
+                    </SortExpression>
+                  </SortExpressions>
+                  <Label>=Fields!日期.Value</Label>
+                </ChartMember>
+              </ChartMembers>
+            </ChartCategoryHierarchy>
+            <ChartSeriesHierarchy>
+              <ChartMembers>
+                <ChartMember>
+                  <Label>修正后電能值</Label>
+                </ChartMember>
+                <ChartMember>
+                  <Label />
+                </ChartMember>
+                <ChartMember>
+                  <Label>上月修正后電能值</Label>
+                </ChartMember>
+              </ChartMembers>
+            </ChartSeriesHierarchy>
+            <ChartData>
+              <ChartSeriesCollection>
+                <ChartSeries Name="修正后電能值">
+                  <ChartDataPoints>
+                    <ChartDataPoint>
+                      <ChartDataPointValues>
+                        <Y>=Sum(Fields!修正后電能值.Value)</Y>
+                      </ChartDataPointValues>
+                      <ChartDataLabel>
+                        <Style />
+                        <Label>當月用電量</Label>
+                      </ChartDataLabel>
+                      <Style />
+                      <ChartMarker>
+                        <Style />
+                      </ChartMarker>
+                      <DataElementOutput>Output</DataElementOutput>
+                    </ChartDataPoint>
+                  </ChartDataPoints>
+                  <Style />
+                  <ChartEmptyPoints>
+                    <Style />
+                    <ChartMarker>
+                      <Style />
+                    </ChartMarker>
+                    <ChartDataLabel>
+                      <Style />
+                    </ChartDataLabel>
+                  </ChartEmptyPoints>
+                  <ChartItemInLegend>
+                    <LegendText>當月用電量</LegendText>
+                  </ChartItemInLegend>
+                  <ValueAxisName>Primary</ValueAxisName>
+                  <CategoryAxisName>Primary</CategoryAxisName>
+                  <ChartSmartLabel>
+                    <CalloutLineColor>Black</CalloutLineColor>
+                    <MinMovingDistance>0pt</MinMovingDistance>
+                  </ChartSmartLabel>
+                </ChartSeries>
+                <ChartSeries Name="Series">
+                  <Hidden>true</Hidden>
+                  <ChartDataPoints>
+                    <ChartDataPoint>
+                      <ChartDataPointValues>
+                        <X>用電量限額</X>
+                        <Y>=450</Y>
+                      </ChartDataPointValues>
+                      <ChartDataLabel>
+                        <Style />
+                        <Label>用電量限額</Label>
+                      </ChartDataLabel>
+                      <Style />
+                      <ChartMarker>
+                        <Style />
+                      </ChartMarker>
+                      <DataElementOutput>Output</DataElementOutput>
+                    </ChartDataPoint>
+                  </ChartDataPoints>
+                  <Style />
+                  <ChartEmptyPoints>
+                    <Style />
+                    <ChartMarker>
+                      <Style />
+                    </ChartMarker>
+                    <ChartDataLabel>
+                      <Style />
+                    </ChartDataLabel>
+                  </ChartEmptyPoints>
+                  <ValueAxisName>Primary</ValueAxisName>
+                  <CategoryAxisName>Primary</CategoryAxisName>
+                  <ChartSmartLabel>
+                    <CalloutLineColor>Black</CalloutLineColor>
+                    <MinMovingDistance>0pt</MinMovingDistance>
+                  </ChartSmartLabel>
+                </ChartSeries>
+                <ChartSeries Name="上月修正后電能值">
+                  <Hidden>true</Hidden>
+                  <ChartDataPoints>
+                    <ChartDataPoint>
+                      <ChartDataPointValues>
+                        <Y>=Sum(Fields!上月修正后電能值.Value)</Y>
+                      </ChartDataPointValues>
+                      <ChartDataLabel>
+                        <Style />
+                      </ChartDataLabel>
+                      <Style />
+                      <ChartMarker>
+                        <Style />
+                      </ChartMarker>
+                      <DataElementOutput>Output</DataElementOutput>
+                    </ChartDataPoint>
+                  </ChartDataPoints>
+                  <Style />
+                  <ChartEmptyPoints>
+                    <Style />
+                    <ChartMarker>
+                      <Style />
+                    </ChartMarker>
+                    <ChartDataLabel>
+                      <Style />
+                    </ChartDataLabel>
+                  </ChartEmptyPoints>
+                  <ValueAxisName>Primary</ValueAxisName>
+                  <CategoryAxisName>Primary</CategoryAxisName>
+                  <ChartSmartLabel>
+                    <CalloutLineColor>Black</CalloutLineColor>
+                    <MinMovingDistance>0pt</MinMovingDistance>
+                  </ChartSmartLabel>
+                </ChartSeries>
+              </ChartSeriesCollection>
+              <ChartDerivedSeriesCollection>
+                <ChartDerivedSeries>
+                  <ChartSeries Name="DerivedSeries1">
+                    <Type>Line</Type>
+                    <Style>
+                      <Border>
+                        <Color>Red</Color>
+                        <Style>Dashed</Style>
+                        <Width>1.5pt</Width>
+                      </Border>
+                      <Color>Red</Color>
+                    </Style>
+                    <ChartMarker>
+                      <Style />
+                    </ChartMarker>
+                    <ChartDataLabel>
+                      <Style />
+                    </ChartDataLabel>
+                    <ChartEmptyPoints>
+                      <Style />
+                      <ChartMarker>
+                        <Style />
+                      </ChartMarker>
+                      <ChartDataLabel>
+                        <Style />
+                      </ChartDataLabel>
+                    </ChartEmptyPoints>
+                    <ChartItemInLegend>
+                      <LegendText>用電量限額</LegendText>
+                    </ChartItemInLegend>
+                    <ChartAreaName>Default</ChartAreaName>
+                    <ValueAxisName>Primary</ValueAxisName>
+                    <CategoryAxisName>Primary</CategoryAxisName>
+                    <ChartSmartLabel>
+                      <CalloutLineColor>Black</CalloutLineColor>
+                      <MinMovingDistance>0pt</MinMovingDistance>
+                    </ChartSmartLabel>
+                  </ChartSeries>
+                  <SourceChartSeriesName>Series</SourceChartSeriesName>
+                  <DerivedSeriesFormula>MovingAverage</DerivedSeriesFormula>
+                  <ChartFormulaParameters>
+                    <ChartFormulaParameter Name="Period">
+                      <Value>1</Value>
+                    </ChartFormulaParameter>
+                    <ChartFormulaParameter Name="StartFromFirst">
+                      <Value>True</Value>
+                    </ChartFormulaParameter>
+                  </ChartFormulaParameters>
+                </ChartDerivedSeries>
+                <ChartDerivedSeries>
+                  <ChartSeries Name="DerivedSeries2">
+                    <Type>Line</Type>
+                    <Style>
+                      <Border>
+                        <Color>Lime</Color>
+                        <Width>2pt</Width>
+                      </Border>
+                      <Color>LimeGreen</Color>
+                    </Style>
+                    <ChartMarker>
+                      <Type>Circle</Type>
+                      <Style />
+                    </ChartMarker>
+                    <ChartDataLabel>
+                      <Style />
+                    </ChartDataLabel>
+                    <ChartEmptyPoints>
+                      <Style />
+                      <ChartMarker>
+                        <Style />
+                      </ChartMarker>
+                      <ChartDataLabel>
+                        <Style />
+                      </ChartDataLabel>
+                    </ChartEmptyPoints>
+                    <ChartItemInLegend>
+                      <LegendText>上一月用電量</LegendText>
+                    </ChartItemInLegend>
+                    <ChartAreaName>Default</ChartAreaName>
+                    <ValueAxisName>Primary</ValueAxisName>
+                    <CategoryAxisName>Primary</CategoryAxisName>
+                    <ChartSmartLabel>
+                      <CalloutLineColor>Black</CalloutLineColor>
+                      <MinMovingDistance>0pt</MinMovingDistance>
+                    </ChartSmartLabel>
+                  </ChartSeries>
+                  <SourceChartSeriesName>上月修正后電能值</SourceChartSeriesName>
+                  <DerivedSeriesFormula>MovingAverage</DerivedSeriesFormula>
+                  <ChartFormulaParameters>
+                    <ChartFormulaParameter Name="Period">
+                      <Value>1</Value>
+                    </ChartFormulaParameter>
+                    <ChartFormulaParameter Name="StartFromFirst">
+                      <Value>True</Value>
+                    </ChartFormulaParameter>
+                  </ChartFormulaParameters>
+                </ChartDerivedSeries>
+              </ChartDerivedSeriesCollection>
+            </ChartData>
+            <ChartAreas>
+              <ChartArea Name="Default">
+                <ChartCategoryAxes>
+                  <ChartAxis Name="Primary">
+                    <Style>
+                      <FontSize>8pt</FontSize>
+                    </Style>
+                    <ChartAxisTitle>
+                      <Caption>日期</Caption>
+                      <Style>
+                        <FontSize>8pt</FontSize>
+                      </Style>
+                    </ChartAxisTitle>
+                    <ChartMajorGridLines>
+                      <Enabled>False</Enabled>
+                      <Style>
+                        <Border>
+                          <Color>Gainsboro</Color>
+                        </Border>
+                      </Style>
+                    </ChartMajorGridLines>
+                    <ChartMinorGridLines>
+                      <Style>
+                        <Border>
+                          <Color>Gainsboro</Color>
+                          <Style>Dotted</Style>
+                        </Border>
+                      </Style>
+                    </ChartMinorGridLines>
+                    <ChartMinorTickMarks>
+                      <Length>0.5</Length>
+                    </ChartMinorTickMarks>
+                    <CrossAt>NaN</CrossAt>
+                    <Minimum>NaN</Minimum>
+                    <Maximum>NaN</Maximum>
+                    <ChartAxisScaleBreak>
+                      <Style />
+                    </ChartAxisScaleBreak>
+                  </ChartAxis>
+                  <ChartAxis Name="Secondary">
+                    <Style>
+                      <FontSize>8pt</FontSize>
+                    </Style>
+                    <ChartAxisTitle>
+                      <Caption>軸標題</Caption>
+                      <Style>
+                        <FontSize>8pt</FontSize>
+                      </Style>
+                    </ChartAxisTitle>
+                    <ChartMajorGridLines>
+                      <Enabled>False</Enabled>
+                      <Style>
+                        <Border>
+                          <Color>Gainsboro</Color>
+                        </Border>
+                      </Style>
+                    </ChartMajorGridLines>
+                    <ChartMinorGridLines>
+                      <Style>
+                        <Border>
+                          <Color>Gainsboro</Color>
+                          <Style>Dotted</Style>
+                        </Border>
+                      </Style>
+                    </ChartMinorGridLines>
+                    <ChartMinorTickMarks>
+                      <Length>0.5</Length>
+                    </ChartMinorTickMarks>
+                    <CrossAt>NaN</CrossAt>
+                    <Location>Opposite</Location>
+                    <Minimum>NaN</Minimum>
+                    <Maximum>NaN</Maximum>
+                    <ChartAxisScaleBreak>
+                      <Style />
+                    </ChartAxisScaleBreak>
+                  </ChartAxis>
+                </ChartCategoryAxes>
+                <ChartValueAxes>
+                  <ChartAxis Name="Primary">
+                    <Style>
+                      <FontSize>8pt</FontSize>
+                    </Style>
+                    <ChartAxisTitle>
+                      <Caption>電能值kWh</Caption>
+                      <Style>
+                        <FontSize>8pt</FontSize>
+                      </Style>
+                    </ChartAxisTitle>
+                    <ChartMajorGridLines>
+                      <Style>
+                        <Border>
+                          <Color>Gainsboro</Color>
+                        </Border>
+                      </Style>
+                    </ChartMajorGridLines>
+                    <ChartMinorGridLines>
+                      <Style>
+                        <Border>
+                          <Color>Gainsboro</Color>
+                          <Style>Dotted</Style>
+                        </Border>
+                      </Style>
+                    </ChartMinorGridLines>
+                    <ChartMinorTickMarks>
+                      <Length>0.5</Length>
+                    </ChartMinorTickMarks>
+                    <CrossAt>NaN</CrossAt>
+                    <Minimum>NaN</Minimum>
+                    <Maximum>NaN</Maximum>
+                    <ChartAxisScaleBreak>
+                      <Style />
+                    </ChartAxisScaleBreak>
+                  </ChartAxis>
+                  <ChartAxis Name="Secondary">
+                    <Style>
+                      <FontSize>8pt</FontSize>
+                    </Style>
+                    <ChartAxisTitle>
+                      <Caption>軸標題</Caption>
+                      <Style>
+                        <FontSize>8pt</FontSize>
+                      </Style>
+                    </ChartAxisTitle>
+                    <ChartMajorGridLines>
+                      <Style>
+                        <Border>
+                          <Color>Gainsboro</Color>
+                        </Border>
+                      </Style>
+                    </ChartMajorGridLines>
+                    <ChartMinorGridLines>
+                      <Style>
+                        <Border>
+                          <Color>Gainsboro</Color>
+                          <Style>Dotted</Style>
+                        </Border>
+                      </Style>
+                    </ChartMinorGridLines>
+                    <ChartMinorTickMarks>
+                      <Length>0.5</Length>
+                    </ChartMinorTickMarks>
+                    <CrossAt>NaN</CrossAt>
+                    <Location>Opposite</Location>
+                    <Minimum>NaN</Minimum>
+                    <Maximum>NaN</Maximum>
+                    <ChartAxisScaleBreak>
+                      <Style />
+                    </ChartAxisScaleBreak>
+                  </ChartAxis>
+                </ChartValueAxes>
+                <Style>
+                  <BackgroundGradientType>None</BackgroundGradientType>
+                </Style>
+              </ChartArea>
+            </ChartAreas>
+            <ChartLegends>
+              <ChartLegend Name="Default">
+                <Style>
+                  <BackgroundGradientType>None</BackgroundGradientType>
+                  <FontSize>8pt</FontSize>
+                </Style>
+                <ChartLegendTitle>
+                  <Caption />
+                  <Style>
+                    <FontSize>8pt</FontSize>
+                    <FontWeight>Bold</FontWeight>
+                    <TextAlign>Center</TextAlign>
+                  </Style>
+                </ChartLegendTitle>
+                <HeaderSeparatorColor>Black</HeaderSeparatorColor>
+                <ColumnSeparatorColor>Black</ColumnSeparatorColor>
+              </ChartLegend>
+            </ChartLegends>
+            <ChartTitles>
+              <ChartTitle Name="Default">
+                <Caption>機房日用電分析</Caption>
+                <Style>
+                  <BackgroundGradientType>None</BackgroundGradientType>
+                  <FontWeight>Bold</FontWeight>
+                  <TextAlign>General</TextAlign>
+                  <VerticalAlign>Top</VerticalAlign>
+                </Style>
+              </ChartTitle>
+            </ChartTitles>
+            <Palette>BrightPastel</Palette>
+            <ChartBorderSkin>
+              <Style>
+                <BackgroundColor>Gray</BackgroundColor>
+                <BackgroundGradientType>None</BackgroundGradientType>
+                <Color>White</Color>
+              </Style>
+            </ChartBorderSkin>
+            <ChartNoDataMessage Name="NoDataMessage">
+              <Caption>沒有可用資料</Caption>
+              <Style>
+                <BackgroundGradientType>None</BackgroundGradientType>
+                <TextAlign>General</TextAlign>
+                <VerticalAlign>Top</VerticalAlign>
+              </Style>
+            </ChartNoDataMessage>
+            <DataSetName>機房日用電分析</DataSetName>
+            <Top>0mm</Top>
+            <Left>0mm</Left>
+            <Height>69.42667mm</Height>
+            <Width>310.94374mm</Width>
+            <ZIndex>2</ZIndex>
+            <Style>
+              <Border>
+                <Color>LightGrey</Color>
+                <Style>Solid</Style>
+              </Border>
+              <BackgroundColor>White</BackgroundColor>
+              <BackgroundGradientType>None</BackgroundGradientType>
+            </Style>
+          </Chart>
+        </ReportItems>
+        <Height>161.58889mm</Height>
+        <Style>
+          <Border>
+            <Style>None</Style>
+          </Border>
+        </Style>
+      </Body>
+      <Width>310.94374mm</Width>
+      <Page>
+        <PageFooter>
+          <Height>11.43mm</Height>
+          <PrintOnFirstPage>true</PrintOnFirstPage>
+          <PrintOnLastPage>true</PrintOnLastPage>
+          <ReportItems>
+            <Textbox Name="ExecutionTime">
+              <CanGrow>true</CanGrow>
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>=Globals!ExecutionTime</Value>
+                      <Style />
+                    </TextRun>
+                  </TextRuns>
+                  <Style>
+                    <TextAlign>Right</TextAlign>
+                  </Style>
+                </Paragraph>
+              </Paragraphs>
+              <rd:DefaultName>ExecutionTime</rd:DefaultName>
+              <Top>1.905mm</Top>
+              <Left>0mm</Left>
+              <Height>6.35mm</Height>
+              <Width>50.8mm</Width>
+              <Style>
+                <Border>
+                  <Style>None</Style>
+                </Border>
+                <PaddingLeft>2pt</PaddingLeft>
+                <PaddingRight>2pt</PaddingRight>
+                <PaddingTop>2pt</PaddingTop>
+                <PaddingBottom>2pt</PaddingBottom>
+              </Style>
+            </Textbox>
+          </ReportItems>
+          <Style>
+            <Border>
+              <Style>None</Style>
+            </Border>
+          </Style>
+        </PageFooter>
+        <PageHeight>297mm</PageHeight>
+        <PageWidth>210mm</PageWidth>
+        <LeftMargin>20mm</LeftMargin>
+        <RightMargin>20mm</RightMargin>
+        <TopMargin>20mm</TopMargin>
+        <BottomMargin>20mm</BottomMargin>
+        <ColumnSpacing>0.13cm</ColumnSpacing>
+        <Style />
+      </Page>
+    </ReportSection>
+  </ReportSections>
+  <ReportParameters>
+    <ReportParameter Name="廠區">
+      <DataType>String</DataType>
+      <DefaultValue>
+        <Values>
+          <Value>龍華</Value>
+        </Values>
+      </DefaultValue>
+      <Prompt>廠區</Prompt>
+      <ValidValues>
+        <DataSetReference>
+          <DataSetName>工廠下拉</DataSetName>
+          <ValueField>Plant</ValueField>
+          <LabelField>Plant</LabelField>
+        </DataSetReference>
+      </ValidValues>
+    </ReportParameter>
+    <ReportParameter Name="樓棟">
+      <DataType>String</DataType>
+      <DefaultValue>
+        <Values>
+          <Value>C8棟1樓</Value>
+        </Values>
+      </DefaultValue>
+      <Prompt>樓棟</Prompt>
+      <ValidValues>
+        <DataSetReference>
+          <DataSetName>樓棟</DataSetName>
+          <ValueField>Building</ValueField>
+          <LabelField>Building</LabelField>
+        </DataSetReference>
+      </ValidValues>
+    </ReportParameter>
+    <ReportParameter Name="機房">
+      <DataType>String</DataType>
+      <DefaultValue>
+        <Values>
+          <Value>A</Value>
+        </Values>
+      </DefaultValue>
+      <Prompt>機房</Prompt>
+      <ValidValues>
+        <DataSetReference>
+          <DataSetName>機房</DataSetName>
+          <ValueField>ComputerRoom</ValueField>
+          <LabelField>ComputerRoom</LabelField>
+        </DataSetReference>
+      </ValidValues>
+    </ReportParameter>
+    <ReportParameter Name="月份">
+      <DataType>String</DataType>
+      <DefaultValue>
+        <DataSetReference>
+          <DataSetName>DefaultMonth</DataSetName>
+          <ValueField>Month</ValueField>
+        </DataSetReference>
+      </DefaultValue>
+      <AllowBlank>true</AllowBlank>
+      <Prompt>月份</Prompt>
+      <ValidValues>
+        <ParameterValues>
+          <ParameterValue>
+            <Value>1</Value>
+            <Label>1月</Label>
+          </ParameterValue>
+          <ParameterValue>
+            <Value>2</Value>
+            <Label>2月</Label>
+          </ParameterValue>
+          <ParameterValue>
+            <Value>3</Value>
+            <Label>3月</Label>
+          </ParameterValue>
+          <ParameterValue>
+            <Value>4</Value>
+            <Label>4月</Label>
+          </ParameterValue>
+          <ParameterValue>
+            <Value>5</Value>
+            <Label>5月</Label>
+          </ParameterValue>
+          <ParameterValue>
+            <Value>6</Value>
+            <Label>6月</Label>
+          </ParameterValue>
+          <ParameterValue>
+            <Value>7</Value>
+            <Label>7月</Label>
+          </ParameterValue>
+          <ParameterValue>
+            <Value>8</Value>
+            <Label>8月</Label>
+          </ParameterValue>
+          <ParameterValue>
+            <Value>9</Value>
+            <Label>9月</Label>
+          </ParameterValue>
+          <ParameterValue>
+            <Value>10</Value>
+            <Label>10月</Label>
+          </ParameterValue>
+          <ParameterValue>
+            <Value>11</Value>
+            <Label>11月</Label>
+          </ParameterValue>
+          <ParameterValue>
+            <Value>12</Value>
+            <Label>12月</Label>
+          </ParameterValue>
+        </ParameterValues>
+      </ValidValues>
+    </ReportParameter>
+    <ReportParameter Name="年份">
+      <DataType>String</DataType>
+      <DefaultValue>
+        <Values>
+          <Value>=Year(Globals!ExecutionTime)</Value>
+        </Values>
+      </DefaultValue>
+      <Prompt>年份</Prompt>
+    </ReportParameter>
+  </ReportParameters>
+  <EmbeddedImages>
+    <EmbeddedImage Name="報表多線框">
+      <MIMEType>image/png</MIMEType>
+      <ImageData>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</ImageData>
+    </EmbeddedImage>
+    <EmbeddedImage Name="用於機房日用電分析報表">
+      <MIMEType>image/png</MIMEType>
+      <ImageData>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</ImageData>
+    </EmbeddedImage>
+    <EmbeddedImage Name="用於機房日用電分析報表1">
+      <MIMEType>image/png</MIMEType>
+      <ImageData>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</ImageData>
+    </EmbeddedImage>
+    <EmbeddedImage Name="用於機房日用電分析報表2">
+      <MIMEType>image/png</MIMEType>
+      <ImageData>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</ImageData>
+    </EmbeddedImage>
+  </EmbeddedImages>
+  <rd:ReportUnitType>Mm</rd:ReportUnitType>
+  <rd:ReportServerUrl>http://10.62.197.16/ReportServer</rd:ReportServerUrl>
+  <rd:ReportID>f641c6b1-9f7c-44c6-aa85-4c2dba3cedb8</rd:ReportID>
+</Report>
